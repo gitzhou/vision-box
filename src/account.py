@@ -2,13 +2,14 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 from PyQt6 import QtCore, QtGui
-from PyQt6.QtWidgets import QMainWindow, QMessageBox, QInputDialog, QStackedLayout, QLabel
+from PyQt6.QtWidgets import QMainWindow, QMessageBox, QInputDialog, QStackedLayout, QLabel, QMenu
 from mvclib.constants import Chain, BIP44_DERIVATION_PATH
 from mvclib.hd import mnemonic_from_entropy, derive_xprv_from_mnemonic
 
 from base import require_password, select_chain, font, still_under_development, activate
 from designer.account import Ui_mainWindowAccount
 from hd import HdUi
+from input_dialog import InputDialogUi
 from utils import write_account_file
 from wallet import WalletUi
 
@@ -69,6 +70,8 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.model = WalletModel(self.account)
         self.listViewWallets.setModel(self.model)
         self.listViewWallets.selectionModel().selectionChanged.connect(self.wallet_list_selection_changed)
+        self.listViewWallets.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.listViewWallets.customContextMenuRequested.connect(self.wallet_list_context_menu)
         # 默认选中第一个钱包
         self.select_wallet_in_list(0)
 
@@ -172,3 +175,26 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         for i in range(self.stacked_layout.count()):
             self.stacked_layout.widget(i).close()
         super().closeEvent(a0)
+
+    def wallet_list_context_menu(self, pos):
+        menu = QMenu()
+        action_rename = menu.addAction('重命名')
+        action = menu.exec(self.listViewWallets.mapToGlobal(pos))
+        if action == action_rename:
+            self.context_menu_action_rename_clicked()
+
+    def context_menu_action_rename_clicked(self):
+        dialog = InputDialogUi()
+        dialog.setWindowTitle('重命名')
+        dialog.labelDescription.setText(f'输入新的钱包名称。')
+        dialog.lineEdit.setText(self.account[self.listViewWallets.selectedIndexes()[0].row()]['name'])
+        dialog.text_entered.connect(self.rename_wallet)
+        dialog.exec()
+
+    def rename_wallet(self, name: str):
+        index = self.listViewWallets.selectedIndexes()[0].row()
+        self.account[index]['name'] = name
+        write_account_file(self.account, self.account_file, self.password)
+        self.refresh_wallet_list()
+        wallet_widget: WalletUi = self.stacked_layout.widget(index)
+        wallet_widget.update_fields(w=self.account[index])
