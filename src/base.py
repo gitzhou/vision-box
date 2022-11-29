@@ -9,11 +9,10 @@ from mvclib.constants import Chain
 
 from input_dialog import InputDialogUi
 from utils import format_coin
-from utils import password_format_valid, client_key_format_valid
 
 
 def require_password(slot, account_name: str = ''):
-    dialog = InputDialogUi(validator=password_format_valid)
+    dialog = InputDialogUi()
     dialog.setWindowTitle('输入密码')
     account_name = f' {account_name} ' if account_name else '文件'
     dialog.labelDescription.setText(f'账户{account_name}已加密，输入正确的密码解锁。')
@@ -23,7 +22,7 @@ def require_password(slot, account_name: str = ''):
 
 
 def activate(slot):
-    dialog = InputDialogUi(validator=client_key_format_valid)
+    dialog = InputDialogUi()
     dialog.setWindowTitle('激活')
     dialog.labelDescription.setText(f'输入客户端密钥。')
     dialog.text_entered.connect(slot)

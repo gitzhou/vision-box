@@ -6,6 +6,10 @@ from PyQt6.QtWidgets import QDialog, QDialogButtonBox
 from designer.input_dialog import Ui_dialogInput
 
 
+def _not_blank(s: str) -> bool:
+    return True if s else False
+
+
 class InputDialogUi(QDialog, Ui_dialogInput):
     text_entered = QtCore.pyqtSignal(str)
 
@@ -13,10 +17,9 @@ class InputDialogUi(QDialog, Ui_dialogInput):
         super(InputDialogUi, self).__init__()
         self.setupUi(self)
 
-        if validator:
-            self.validator = validator
-            self.lineEdit.textChanged.connect(self.enable_ok_button)
-        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(validator is None)
+        self.validator = validator if validator else _not_blank
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+        self.lineEdit.textChanged.connect(self.enable_ok_button)
 
         self.lineEdit.setFocus()
         self.setFixedSize(self.geometry().width(), self.geometry().height())

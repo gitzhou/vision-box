@@ -2,7 +2,6 @@ from PyQt6 import QtCore
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox
 
 from designer.set_password import Ui_dialogSetPassword
-from utils import password_format_valid
 
 
 class SetPasswordUi(QDialog, Ui_dialogSetPassword):
@@ -21,7 +20,7 @@ class SetPasswordUi(QDialog, Ui_dialogSetPassword):
         self.lineEditConfirm.textChanged.connect(self.enable_ok_button)
 
     def enable_ok_button(self):
-        enabled = password_format_valid(self.lineEditPassword.text()) and self.lineEditPassword.text() == self.lineEditConfirm.text()
+        enabled = self.lineEditPassword.text() != '' and self.lineEditPassword.text() == self.lineEditConfirm.text()
         self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(enabled)
 
     def emit_password(self):

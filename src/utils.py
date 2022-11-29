@@ -43,11 +43,3 @@ def format_coin(amount: int, decimal: int = 8, decimal_digits: int = None, fixed
     if rstrip and '.' in s:
         s = s.rstrip('0').rstrip('.')
     return s
-
-
-def password_format_valid(password: str) -> bool:
-    return True if password and len(password) >= 6 else False
-
-
-def client_key_format_valid(client_key: str) -> bool:
-    return True if client_key else False
