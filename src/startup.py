@@ -65,13 +65,13 @@ class StartupUi(QWidget, Ui_formStartup):
             write_account_file(account, self.account_file, password)
             self.show_account_window(account, password)
         except Exception as e:
-            QMessageBox.critical(self, '错误', f'账户 {Path(self.account_file).stem} 创建出错。\n\n{e}', QMessageBox.StandardButton.Ok)
+            QMessageBox.critical(self, '错误', f'账户“{Path(self.account_file).stem}”创建出错。\n\n{e}', QMessageBox.StandardButton.Ok)
 
     def open_account_file(self, password: str):
         try:
             self.show_account_window(read_account_file(self.account_file, password), password)
         except Exception as e:
-            QMessageBox.critical(self, '错误', f'账户 {Path(self.account_file).stem} 解锁出错。\n\n{e}', QMessageBox.StandardButton.Ok)
+            QMessageBox.critical(self, '错误', f'账户“{Path(self.account_file).stem}”无法解锁，密码错误或文件损坏。\n\n{e}', QMessageBox.StandardButton.Ok)
 
     def show_account_window(self, account: List[Dict], password: str):
         self.account_window = AccountUi(self.app_settings, account, self.account_file, password)

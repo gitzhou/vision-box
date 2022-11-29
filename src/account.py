@@ -19,9 +19,9 @@ class WalletModel(QtCore.QAbstractListModel):
         super(WalletModel, self).__init__()
         self.wallets: List[Dict] = []
         self._wallets: List[str] = []
-        self.refresh(wallets)
+        self.update_fields(wallets)
 
-    def refresh(self, wallets: Optional[List[Dict]] = None):
+    def update_fields(self, wallets: Optional[List[Dict]] = None):
         self.wallets = wallets or []
         self._wallets = [f'  {wallet["name"]}' for wallet in self.wallets]
 
@@ -49,7 +49,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.account_file = account_file
         self.password = password
 
-        self.setWindowTitle(f'账户 | {Path(self.account_file).stem}')
+        self.setWindowTitle(f'账户：{Path(self.account_file).stem}')
         self.setWindowState(QtCore.Qt.WindowState.WindowMaximized)
         self.stacked_layout = QStackedLayout()
         self.widget.setLayout(self.stacked_layout)
@@ -83,7 +83,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.app_settings_updated.emit(self.app_settings)
         for i in range(self.stacked_layout.count()):
             w: WalletUi = self.stacked_layout.widget(i)
-            w.refresh(app_settings=self.app_settings)
+            w.update_fields(app_settings=self.app_settings)
 
     def wallet_list_selection_changed(self, selected: QtCore.QItemSelection, last_selected: QtCore.QItemSelection):
         row = selected.indexes()[0].row() if selected.indexes() else last_selected.indexes()[0].row()
@@ -153,7 +153,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
 
     def refresh_wallet_list(self):
         """刷新左侧的钱包列表"""
-        self.model.refresh(self.account)
+        self.model.update_fields(self.account)
         # noinspection PyUnresolvedReferences
         self.model.layoutChanged.emit()
 

@@ -21,9 +21,9 @@ class RefreshUnspentThread(QtCore.QThread):
     def __init__(self, xprv: Xprv, client_key: str):
         super(RefreshUnspentThread, self).__init__()
         self.w = None
-        self.refresh(xprv, client_key)
+        self.update_fields(xprv, client_key)
 
-    def refresh(self, xprv: Xprv, client_key: str):
+    def update_fields(self, xprv: Xprv, client_key: str):
         self.w = WalletLite(xprv, client_key=client_key or '-')
 
     def run(self):
@@ -42,9 +42,9 @@ class RefreshFtThread(QtCore.QThread):
         self.address = None
         self.chain = None
         self.client_key = None
-        self.refresh(k, client_key)
+        self.update_fields(k, client_key)
 
-    def refresh(self, k: Key, client_key: str):
+    def update_fields(self, k: Key, client_key: str):
         self.address = k.address()
         self.chain = k.chain
         self.client_key = client_key or '-'
@@ -147,12 +147,12 @@ class WalletUi(QWidget, Ui_formWallet):
 
     def refresh_unspent_table_and_balance(self, unspents: Optional[List[Unspent]]):
         if unspents is not None:
-            self.unspent_model.refresh(unspents)
+            self.unspent_model.update_fields(unspents)
             self.tableViewUnspent.sortByColumn(0, QtCore.Qt.SortOrder.AscendingOrder)
             self.labelUnspentBalance.setText(format_coin(sum([unspent.satoshi for unspent in unspents])))
             self.toolBox.setItemText(self.toolBox.indexOf(self.pageUnspent), f'UTXO（{len(unspents)}）' if unspents else 'UTXO')
             self.pushButtonUnspentSend.setEnabled(len(unspents) > 0)
-        self.keys_widget.refresh(unspents=unspents)
+        self.keys_widget.update_fields(unspents=unspents)
         self.network_status_updated.emit(unspents is not None)
 
     def unspent_send_button_clicked(self):
@@ -177,7 +177,7 @@ class WalletUi(QWidget, Ui_formWallet):
 
     def refresh_ft_table(self, fts: Optional[List[Dict]]):
         if fts is not None:
-            self.ft_model.refresh(fts)
+            self.ft_model.update_fields(fts)
             self.tableViewFt.sortByColumn(0, QtCore.Qt.SortOrder.AscendingOrder)
             self.toolBox.setItemText(self.toolBox.indexOf(self.pageFt), f'Token（{len(fts)}）' if fts else 'Token')
         self.network_status_updated.emit(fts is not None)
@@ -194,15 +194,15 @@ class WalletUi(QWidget, Ui_formWallet):
             fts.append(self.ft_model.fts[row])
         return fts
 
-    def refresh(self, app_settings: Optional[Dict] = None, password: Optional[str] = None, w: Optional[Dict] = None):
+    def update_fields(self, app_settings: Optional[Dict] = None, password: Optional[str] = None, w: Optional[Dict] = None):
         if app_settings is not None:
             self.app_settings = app_settings
-            self.refresh_unspent_thread.refresh(self.xprv, self.app_settings['client_key'])
-            self.refresh_ft_thread.refresh(self.k, self.app_settings['client_key'])
+            self.refresh_unspent_thread.update_fields(self.xprv, self.app_settings['client_key'])
+            self.refresh_ft_thread.update_fields(self.k, self.app_settings['client_key'])
             self.refresh_button_clicked()
         if password is not None:
             self.password = password
-            self.keys_widget.refresh(password=self.password)
+            self.keys_widget.update_fields(password=self.password)
         if w is not None:
             self.w = w
-            self.keys_widget.refresh(w=self.w)
+            self.keys_widget.update_fields(w=self.w)

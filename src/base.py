@@ -14,7 +14,7 @@ from utils import format_coin
 def require_password(slot, account_name: str = ''):
     dialog = InputDialogUi()
     dialog.setWindowTitle('输入密码')
-    account_name = f' {account_name} ' if account_name else '文件'
+    account_name = f'“{account_name}”' if account_name else '文件'
     dialog.labelDescription.setText(f'账户{account_name}已加密，输入正确的密码解锁。')
     dialog.lineEdit.setEchoMode(QLineEdit.EchoMode.Password)
     dialog.text_entered.connect(slot)
@@ -69,10 +69,10 @@ class UnspentModel(QtCore.QAbstractTableModel):
         super(UnspentModel, self).__init__()
         self.unspents: List[Unspent] = []
         self._unspents: List[str] = []
-        self.refresh(unspents)
+        self.update_fields(unspents)
         self.headers = ['高度', '输出', '地址', '数量']
 
-    def refresh(self, unspents: Optional[List[Unspent]] = None):
+    def update_fields(self, unspents: Optional[List[Unspent]] = None):
         self.unspents = unspents or []
         self._unspents = [(str(u.height), f'{u.txid}:{u.vout}', u.address, format_coin(u.satoshi)) for u in self.unspents]
         # noinspection PyUnresolvedReferences
@@ -97,7 +97,7 @@ class UnspentModel(QtCore.QAbstractTableModel):
 
     def sort(self, column: int, order: QtCore.Qt.SortOrder = ...) -> None:
         self.unspents.sort(key=lambda x: UnspentModel.item_value(x, column), reverse=order == QtCore.Qt.SortOrder.DescendingOrder)
-        self.refresh(self.unspents)
+        self.update_fields(self.unspents)
 
     @classmethod
     def item_value(cls, unspent: Unspent, column: int):
@@ -109,10 +109,10 @@ class FtModel(QtCore.QAbstractTableModel):
         super(FtModel, self).__init__()
         self.fts: List[Dict] = []
         self._fts: List[str] = []
-        self.refresh(fts)
+        self.update_fields(fts)
         self.headers = ['符号', '名称', '标识', 'UTXO', '数量']
 
-    def refresh(self, fts: Optional[List[Dict]] = None):
+    def update_fields(self, fts: Optional[List[Dict]] = None):
         self.fts = fts or []
         self._fts = []
         for i in range(len(self.fts)):
@@ -142,7 +142,7 @@ class FtModel(QtCore.QAbstractTableModel):
 
     def sort(self, column: int, order: QtCore.Qt.SortOrder = ...) -> None:
         self.fts.sort(key=lambda x: FtModel.item_value(x, column), reverse=order == QtCore.Qt.SortOrder.DescendingOrder)
-        self.refresh(self.fts)
+        self.update_fields(self.fts)
 
     @classmethod
     def item_value(cls, ft: Dict, column: int):
