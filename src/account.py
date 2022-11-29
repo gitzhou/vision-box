@@ -3,7 +3,6 @@ from typing import List, Dict, Any, Optional
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, QInputDialog, QStackedLayout, QLabel
-from mvclib import WalletLite
 from mvclib.constants import Chain, BIP44_DERIVATION_PATH
 from mvclib.hd import mnemonic_from_entropy, derive_xprv_from_mnemonic
 
@@ -11,7 +10,7 @@ from base import require_password, select_chain, font, still_under_development, 
 from designer.account import Ui_mainWindowAccount
 from hd import HdUi
 from utils import write_account_file
-from wallet import WalletUi, RefreshUnspentThread, RefreshFtThread
+from wallet import WalletUi
 
 
 class WalletModel(QtCore.QAbstractListModel):
@@ -83,12 +82,8 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.app_settings['client_key'] = client_key
         self.app_settings_updated.emit(self.app_settings)
         for i in range(self.stacked_layout.count()):
-            w = self.stacked_layout.widget(i)
-            w.refresh_unspent_thread = RefreshUnspentThread(WalletLite(w.xprv, client_key=self.app_settings['client_key'] or '-'))
-            w.refresh_unspent_thread.refreshed.connect(w.refresh_unspent_table_and_balance)
-            w.refresh_ft_thread = RefreshFtThread(w.k, self.app_settings['client_key'] or '')
-            w.refresh_ft_thread.refreshed.connect(w.refresh_ft_table)
-            w.refresh_button_clicked()
+            w: WalletUi = self.stacked_layout.widget(i)
+            w.refresh(app_settings=self.app_settings)
 
     def wallet_list_selection_changed(self, selected: QtCore.QItemSelection, last_selected: QtCore.QItemSelection):
         row = selected.indexes()[0].row() if selected.indexes() else last_selected.indexes()[0].row()

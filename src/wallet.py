@@ -18,9 +18,13 @@ from utils import format_coin
 class RefreshUnspentThread(QtCore.QThread):
     refreshed = QtCore.pyqtSignal(object)
 
-    def __init__(self, w: WalletLite):
+    def __init__(self, xprv: Xprv, client_key: str):
         super(RefreshUnspentThread, self).__init__()
-        self.w = w
+        self.w = None
+        self.refresh(xprv, client_key)
+
+    def refresh(self, xprv: Xprv, client_key: str):
+        self.w = WalletLite(xprv, client_key=client_key or '-')
 
     def run(self):
         try:
@@ -33,11 +37,17 @@ class RefreshUnspentThread(QtCore.QThread):
 class RefreshFtThread(QtCore.QThread):
     refreshed = QtCore.pyqtSignal(object)
 
-    def __init__(self, k: Key, client_key: str = ''):
+    def __init__(self, k: Key, client_key: str):
         super(RefreshFtThread, self).__init__()
+        self.address = None
+        self.chain = None
+        self.client_key = None
+        self.refresh(k, client_key)
+
+    def refresh(self, k: Key, client_key: str):
         self.address = k.address()
         self.chain = k.chain
-        self.client_key = client_key
+        self.client_key = client_key or '-'
 
     def run(self):
         try:
@@ -77,7 +87,7 @@ class WalletUi(QWidget, Ui_formWallet):
         self.labelFtAddress.setText(self.k.address())
         self.toolBox.setCurrentIndex(0)
 
-        self.refresh_unspent_thread = RefreshUnspentThread(WalletLite(self.xprv, client_key=self.app_settings['client_key'] or '-'))
+        self.refresh_unspent_thread = RefreshUnspentThread(self.xprv, self.app_settings['client_key'])
         self.refresh_unspent_thread.refreshed.connect(self.refresh_unspent_table_and_balance)
         self.unspent_model = UnspentModel()
         self.tableViewUnspent.setModel(self.unspent_model)
@@ -142,7 +152,7 @@ class WalletUi(QWidget, Ui_formWallet):
             self.labelUnspentBalance.setText(format_coin(sum([unspent.satoshi for unspent in unspents])))
             self.toolBox.setItemText(self.toolBox.indexOf(self.pageUnspent), f'UTXO（{len(unspents)}）' if unspents else 'UTXO')
             self.pushButtonUnspentSend.setEnabled(len(unspents) > 0)
-            self.keys_widget.refresh(unspents)
+        self.keys_widget.refresh(unspents=unspents)
         self.network_status_updated.emit(unspents is not None)
 
     def unspent_send_button_clicked(self):
@@ -183,3 +193,16 @@ class WalletUi(QWidget, Ui_formWallet):
         for row in list(set(index.row() for index in self.tableViewFt.selectedIndexes())):
             fts.append(self.ft_model.fts[row])
         return fts
+
+    def refresh(self, app_settings: Optional[Dict] = None, password: Optional[str] = None, w: Optional[Dict] = None):
+        if app_settings is not None:
+            self.app_settings = app_settings
+            self.refresh_unspent_thread.refresh(self.xprv, self.app_settings['client_key'])
+            self.refresh_ft_thread.refresh(self.k, self.app_settings['client_key'])
+            self.refresh_button_clicked()
+        if password is not None:
+            self.password = password
+            self.keys_widget.refresh(password=self.password)
+        if w is not None:
+            self.w = w
+            self.keys_widget.refresh(w=self.w)

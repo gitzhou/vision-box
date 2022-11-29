@@ -113,16 +113,21 @@ class KeysUi(QWidget, Ui_widgetKeys):
     def enable_change_send_button(self):
         self.pushButtonChangeSend.setEnabled(len(self.unspents_selected(self.tableViewChange)) > 0 and type(self.xkey) is Xprv)
 
-    def refresh(self, unspents: Optional[List[Unspent]]):
-        self.unspents = unspents or []
-        self.receive_proxy_model.beginResetModel()
-        self.receive_model.refresh(self.unspents)
-        self.receive_proxy_model.endResetModel()
-        self.tableViewReceive.clearSelection()
-        self.change_proxy_model.beginResetModel()
-        self.change_model.refresh(self.unspents)
-        self.change_proxy_model.endResetModel()
-        self.tableViewChange.clearSelection()
+    def refresh(self, password: Optional[str] = None, w: Optional[Dict] = None, unspents: Optional[List[Unspent]] = None):
+        if password is not None:
+            self.password = password
+        if w is not None:
+            self.setWindowTitle(f'地址库 | {w["name"]}')
+        if unspents is not None:
+            self.unspents = unspents
+            self.receive_proxy_model.beginResetModel()
+            self.receive_model.refresh(self.unspents)
+            self.receive_proxy_model.endResetModel()
+            self.tableViewReceive.clearSelection()
+            self.change_proxy_model.beginResetModel()
+            self.change_model.refresh(self.unspents)
+            self.change_proxy_model.endResetModel()
+            self.tableViewChange.clearSelection()
 
     def unspents_selected(self, t: QTableView) -> List[Unspent]:
         rows = list(set(index.row() for index in t.selectionModel().selection().indexes()))
