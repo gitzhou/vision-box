@@ -41,5 +41,5 @@ class Ui_formStartup(object):
         _translate = QtCore.QCoreApplication.translate
         formStartup.setWindowTitle(_translate("formStartup", "欢迎"))
         self.pushButtonActivate.setText(_translate("formStartup", "激活"))
-        self.pushButtonNew.setText(_translate("formStartup", "新建"))
-        self.pushButtonOpen.setText(_translate("formStartup", "打开"))
+        self.pushButtonNew.setText(_translate("formStartup", "新建账户"))
+        self.pushButtonOpen.setText(_translate("formStartup", "打开账户"))

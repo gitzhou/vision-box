@@ -58,8 +58,8 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
 
         self.actionActivate.triggered.connect(lambda: activate(self.update_client_key))
         self.actionChangePassword.triggered.connect(lambda: require_password(self.action_change_password_clicked))
-        self.pushButtonNew.clicked.connect(self.new_wallet_button_clicked)
-        self.pushButtonImport.clicked.connect(self.import_wallet_button_clicked)
+        self.pushButtonNew.clicked.connect(lambda: require_password(slot=self.new_wallet))
+        self.pushButtonImport.clicked.connect(lambda: require_password(slot=self.import_wallet))
 
         network = QLabel()
         network.setText('网络连接：')
@@ -119,12 +119,6 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
             self.listViewWallets.setCurrentIndex(self.model.index(index))
             # 显示对应的控件
             self.stacked_layout.setCurrentIndex(index)
-
-    def new_wallet_button_clicked(self):
-        require_password(slot=self.new_wallet)
-
-    def import_wallet_button_clicked(self):
-        require_password(slot=self.import_wallet)
 
     def new_wallet(self, password: str):
         if password != self.password:

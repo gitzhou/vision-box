@@ -149,6 +149,7 @@ class WalletUi(QWidget, Ui_formWallet):
         if unspents is not None:
             self.unspent_model.update_fields(unspents)
             self.tableViewUnspent.sortByColumn(0, QtCore.Qt.SortOrder.AscendingOrder)
+            self.tableViewUnspent.clearSelection()
             self.labelUnspentBalance.setText(format_coin(sum([unspent.satoshi for unspent in unspents])))
             self.toolBox.setItemText(self.toolBox.indexOf(self.pageUnspent), f'UTXO（{len(unspents)}）' if unspents else 'UTXO')
             self.pushButtonUnspentSend.setEnabled(len(unspents) > 0)
@@ -168,7 +169,7 @@ class WalletUi(QWidget, Ui_formWallet):
 
     def unspents_selected(self) -> List[Unspent]:
         unspents: List[Unspent] = []
-        for row in list(set(index.row() for index in self.tableViewUnspent.selectedIndexes())):
+        for row in set(index.row() for index in self.tableViewUnspent.selectedIndexes()):
             unspents.append(self.unspent_model.unspents[row])
         return unspents
 
@@ -190,7 +191,7 @@ class WalletUi(QWidget, Ui_formWallet):
 
     def fts_selected(self) -> List[Dict]:
         fts: List[Dict] = []
-        for row in list(set(index.row() for index in self.tableViewFt.selectedIndexes())):
+        for row in set(index.row() for index in self.tableViewFt.selectedIndexes()):
             fts.append(self.ft_model.fts[row])
         return fts
 

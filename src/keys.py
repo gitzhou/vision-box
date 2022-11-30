@@ -2,12 +2,13 @@ import random
 from typing import List, Optional, Any, Union, Dict
 
 from PyQt6 import QtCore
-from PyQt6.QtWidgets import QWidget, QTableView
+from PyQt6.QtWidgets import QWidget, QTableView, QPushButton, QMessageBox
 from mvclib import Unspent
 from mvclib.hd import Xprv, Xpub, derive_xkeys_from_xkey
 
-from base import font, set_table_view, copy_table_selected, table_select_all
+from base import font, set_table_view, copy_table_selected, table_select_all, require_password
 from designer.keys import Ui_widgetKeys
+from input_dialog import InputDialogUi
 from send_unspents import SendUnspentsUi
 from utils import format_coin
 
@@ -94,18 +95,24 @@ class KeysUi(QWidget, Ui_widgetKeys):
         self.tabWidgetKeys.setCurrentIndex(0)
 
         self.tableViewReceive.selectionModel().selectionChanged.connect(lambda: self.enable_receive_send_button())
+        self.tableViewReceive.selectionModel().selectionChanged.connect(lambda: KeysUi.enable_key_button(self.pushButtonReceiveKey, self.tableViewReceive))
         self.pushButtonReceiveSend.setEnabled(False)
         self.pushButtonReceiveSend.clicked.connect(lambda: self.send_button_clicked(self.tableViewReceive))
         self.pushButtonReceiveClearSelection.clicked.connect(self.tableViewReceive.clearSelection)
         self.pushButtonReceiveCopy.clicked.connect(lambda: copy_table_selected(self.tableViewReceive))
         self.pushButtonReceiveSelectAll.clicked.connect(lambda: table_select_all(self.tableViewReceive))
+        self.pushButtonReceiveKey.setEnabled(False)
+        self.pushButtonReceiveKey.clicked.connect(lambda: require_password(self.key_button_clicked, t=self.tableViewReceive, xkeys=self.receive_xkeys))
 
         self.tableViewChange.selectionModel().selectionChanged.connect(lambda: self.enable_change_send_button())
+        self.tableViewChange.selectionModel().selectionChanged.connect(lambda: KeysUi.enable_key_button(self.pushButtonChangeKey, self.tableViewChange))
         self.pushButtonChangeSend.setEnabled(False)
         self.pushButtonChangeSend.clicked.connect(lambda: self.send_button_clicked(self.tableViewChange))
         self.pushButtonChangeClearSelection.clicked.connect(self.tableViewChange.clearSelection)
         self.pushButtonChangeCopy.clicked.connect(lambda: copy_table_selected(self.tableViewChange))
         self.pushButtonChangeSelectAll.clicked.connect(lambda: table_select_all(self.tableViewChange))
+        self.pushButtonChangeKey.setEnabled(False)
+        self.pushButtonChangeKey.clicked.connect(lambda: require_password(self.key_button_clicked, t=self.tableViewChange, xkeys=self.change_xkeys))
 
     def enable_receive_send_button(self):
         self.pushButtonReceiveSend.setEnabled(len(self.unspents_selected(self.tableViewReceive)) > 0 and type(self.xkey) is Xprv)
@@ -130,7 +137,7 @@ class KeysUi(QWidget, Ui_widgetKeys):
             self.tableViewChange.clearSelection()
 
     def unspents_selected(self, t: QTableView) -> List[Unspent]:
-        rows = list(set(index.row() for index in t.selectionModel().selection().indexes()))
+        rows = set(index.row() for index in t.selectionModel().selection().indexes())
         addresses = [t.model().index(row, 2).data() for row in rows]
         unspents: List[Unspent] = []
         for unspent in self.unspents:
@@ -145,3 +152,24 @@ class KeysUi(QWidget, Ui_widgetKeys):
         if self.send_unspents_dialog.exec():
             t.clearSelection()
             self.request_refresh.emit()
+
+    @classmethod
+    def enable_key_button(cls, b: QPushButton, t: QTableView):
+        rows = set(index.row() for index in t.selectionModel().selection().indexes())
+        b.setEnabled(len(rows) == 1)
+
+    def key_button_clicked(self, password: str, t: QTableView, xkeys: List[Union[Xpub, Xprv]]):
+        if password != self.password:
+            QMessageBox.critical(self, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
+        else:
+            row = t.selectionModel().selection().indexes()[0].row()
+            address = t.model().index(row, 2).data()
+            dialog = InputDialogUi()
+            dialog.setWindowTitle('私钥')
+            dialog.labelDescription.setText(f'地址 {address} 对应的私钥是：')
+            for xkey in xkeys:
+                if xkey.address() == address:
+                    dialog.lineEdit.setText(xkey.private_key().wif())
+                    break
+            dialog.lineEdit.setReadOnly(True)
+            dialog.exec()

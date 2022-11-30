@@ -40,7 +40,7 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
         self.plainTextEditReceivers.textChanged.connect(self.receivers_text_changed)
         self.lineEditAmount.textChanged.connect(self.amount_text_changed)
         self.toolButtonMaxAmount.clicked.connect(self.max_amount_clicked)
-        self.pushButtonSend.clicked.connect(self.send_button_clicked)
+        self.pushButtonSend.clicked.connect(lambda: require_password(slot=self.send_transaction))
 
     def filter_lines(self):
         _lines = self.plainTextEditReceivers.toPlainText().splitlines()
@@ -100,9 +100,6 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
             groups = re.findall(SendUnspentsUi.regex_patter_receivers, '\n'.join(lines), re.MULTILINE)
             for group in groups:
                 self.receivers.append((group[0], int(Decimal(group[1]) * 10 ** COIN_DECIMAL)))
-
-    def send_button_clicked(self):
-        require_password(slot=self.send_transaction)
 
     def send_transaction(self, password: str):
         if password != self.password:

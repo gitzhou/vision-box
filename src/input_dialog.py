@@ -18,12 +18,12 @@ class InputDialogUi(QDialog, Ui_dialogInput):
         self.setupUi(self)
 
         self.validator = validator if validator else _not_blank
-        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
-        self.lineEdit.textChanged.connect(self.enable_ok_button)
 
-        self.lineEdit.setFocus()
         self.setFixedSize(self.geometry().width(), self.geometry().height())
-
+        self.labelDescription.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.lineEdit.textChanged.connect(self.enable_ok_button)
+        self.lineEdit.setFocus()
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
         self.buttonBox.accepted.connect(self.emit_text)
 
     def enable_ok_button(self):

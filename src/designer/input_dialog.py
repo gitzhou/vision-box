@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_dialogInput(object):
     def setupUi(self, dialogInput):
         dialogInput.setObjectName("dialogInput")
-        dialogInput.resize(400, 140)
+        dialogInput.resize(500, 140)
         self.gridLayout = QtWidgets.QGridLayout(dialogInput)
         self.gridLayout.setObjectName("gridLayout")
         self.buttonBox = QtWidgets.QDialogButtonBox(dialogInput)

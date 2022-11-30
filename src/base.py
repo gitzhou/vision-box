@@ -11,13 +11,13 @@ from input_dialog import InputDialogUi
 from utils import format_coin
 
 
-def require_password(slot, account_name: str = ''):
+def require_password(slot, account_name: str = '', **kwargs):
     dialog = InputDialogUi()
     dialog.setWindowTitle('输入密码')
     account_name = f'“{account_name}”' if account_name else '文件'
     dialog.labelDescription.setText(f'账户{account_name}已加密，输入正确的密码解锁。')
     dialog.lineEdit.setEchoMode(QLineEdit.EchoMode.Password)
-    dialog.text_entered.connect(slot)
+    dialog.text_entered.connect(lambda password: slot(password, **kwargs))
     dialog.exec()
 
 
