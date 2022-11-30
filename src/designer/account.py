@@ -59,8 +59,9 @@ class Ui_mainWindowAccount(object):
         self.actionActivate.setObjectName("actionActivate")
         self.actionChangePassword = QtGui.QAction(mainWindowAccount)
         self.actionChangePassword.setObjectName("actionChangePassword")
-        self.menuSettings.addAction(self.actionActivate)
         self.menuSettings.addAction(self.actionChangePassword)
+        self.menuSettings.addSeparator()
+        self.menuSettings.addAction(self.actionActivate)
         self.menubar.addAction(self.menuSettings.menuAction())
 
         self.retranslateUi(mainWindowAccount)
