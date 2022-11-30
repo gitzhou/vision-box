@@ -57,7 +57,10 @@ class Ui_mainWindowAccount(object):
         self.actionExit.setObjectName("actionExit")
         self.actionActivate = QtGui.QAction(mainWindowAccount)
         self.actionActivate.setObjectName("actionActivate")
+        self.actionChangePassword = QtGui.QAction(mainWindowAccount)
+        self.actionChangePassword.setObjectName("actionChangePassword")
         self.menuSettings.addAction(self.actionActivate)
+        self.menuSettings.addAction(self.actionChangePassword)
         self.menubar.addAction(self.menuSettings.menuAction())
 
         self.retranslateUi(mainWindowAccount)
@@ -72,3 +75,4 @@ class Ui_mainWindowAccount(object):
         self.actionExit.setText(_translate("mainWindowAccount", "退出"))
         self.actionExit.setShortcut(_translate("mainWindowAccount", "Ctrl+Q"))
         self.actionActivate.setText(_translate("mainWindowAccount", "激活"))
+        self.actionChangePassword.setText(_translate("mainWindowAccount", "修改密码"))

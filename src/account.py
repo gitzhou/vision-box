@@ -10,6 +10,7 @@ from base import require_password, select_chain, font, still_under_development, 
 from designer.account import Ui_mainWindowAccount
 from hd import HdUi
 from input_dialog import InputDialogUi
+from set_password import SetPasswordUi
 from utils import write_account_file
 from wallet import WalletUi
 
@@ -56,6 +57,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.widget.setLayout(self.stacked_layout)
 
         self.actionActivate.triggered.connect(lambda: activate(self.update_client_key))
+        self.actionChangePassword.triggered.connect(lambda: require_password(self.action_change_password_clicked))
         self.pushButtonNew.clicked.connect(self.new_wallet_button_clicked)
         self.pushButtonImport.clicked.connect(self.import_wallet_button_clicked)
 
@@ -87,6 +89,23 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         for i in range(self.stacked_layout.count()):
             w: WalletUi = self.stacked_layout.widget(i)
             w.update_fields(app_settings=self.app_settings)
+
+    def action_change_password_clicked(self, password: str):
+        if password != self.password:
+            QMessageBox.critical(self, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
+        else:
+            dialog = SetPasswordUi()
+            dialog.password_set.connect(self.change_password)
+            if not dialog.exec():
+                QMessageBox.critical(self, '错误', '密码修改失败，没有设置新密码。', QMessageBox.StandardButton.Ok)
+
+    def change_password(self, password: str):
+        self.password = password
+        write_account_file(self.account, self.account_file, self.password)
+        for i in range(self.stacked_layout.count()):
+            w: WalletUi = self.stacked_layout.widget(i)
+            w.update_fields(password=self.password)
+        QMessageBox.information(self, '信息', '密码修改成功。', QMessageBox.StandardButton.Ok)
 
     def wallet_list_selection_changed(self, selected: QtCore.QItemSelection, last_selected: QtCore.QItemSelection):
         row = selected.indexes()[0].row() if selected.indexes() else last_selected.indexes()[0].row()

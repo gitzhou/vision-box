@@ -61,7 +61,7 @@ def set_table_view(t: QTableView):
 
 
 def still_under_development(parent: QWidget):
-    QMessageBox.information(parent, '提示', '代码还在写。', QMessageBox.StandardButton.Ok)
+    QMessageBox.information(parent, '信息', '代码还在写。', QMessageBox.StandardButton.Ok)
 
 
 class UnspentModel(QtCore.QAbstractTableModel):
