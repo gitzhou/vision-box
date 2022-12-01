@@ -30,8 +30,8 @@ def activate(slot):
 
 
 def select_chain(parent: QWidget) -> Optional[Chain]:
-    test_network, main_network = '测试网', '主网'
-    selected, ok = QInputDialog.getItem(parent, "网络", "选择网络。", [test_network, main_network], 0, False)
+    test_network = '测试网'
+    selected, ok = QInputDialog.getItem(parent, "网络", "选择网络。", [test_network], 0, False)
     if ok:
         return Chain.TEST if selected == test_network else Chain.MAIN
     return None

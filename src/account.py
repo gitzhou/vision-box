@@ -3,12 +3,12 @@ from typing import List, Dict, Any, Optional
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, QInputDialog, QStackedLayout, QLabel, QMenu
-from mvclib.constants import Chain, BIP44_DERIVATION_PATH
-from mvclib.hd import mnemonic_from_entropy, derive_xprv_from_mnemonic
+from mvclib.constants import BIP44_DERIVATION_PATH
+from mvclib.hd import mnemonic_from_entropy
 
 from base import require_password, select_chain, font, still_under_development, activate
 from designer.account import Ui_mainWindowAccount
-from hd import HdUi
+from hd import HdUi, Mode
 from input_dialog import InputDialogUi
 from set_password import SetPasswordUi
 from utils import write_account_file
@@ -124,12 +124,11 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         if password != self.password:
             QMessageBox.critical(self, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
         else:
-            mnemonic = mnemonic_from_entropy()
-            path = BIP44_DERIVATION_PATH
-            # 备份助记词
-            dialog = HdUi(mnemonic=mnemonic, path=path, readonly=True)
-            dialog.exec()
-            self.add_hd({'mnemonic': mnemonic, 'path': path, 'passphrase': ''})
+            chain = select_chain(self)
+            if chain:
+                dialog = HdUi(mnemonic=mnemonic_from_entropy(), path=BIP44_DERIVATION_PATH, chain=chain, mode=Mode.Readonly)
+                dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
+                dialog.exec()
 
     def import_wallet(self, password: str):
         if password != self.password:
@@ -140,25 +139,17 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
             selected, ok = QInputDialog.getItem(self, '钱包类型', '导入何种钱包？', [_hd, _], 0, False)
             if ok:
                 if selected == _hd:
-                    dialog = HdUi()
-                    dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
-                    dialog.exec()
+                    chain = select_chain(self)
+                    if chain:
+                        dialog = HdUi(chain=chain, mode=Mode.HD)
+                        dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
+                        dialog.exec()
                 else:
                     still_under_development(self)
 
     def add_hd(self, hd: Dict):
-        # 选择网络
-        chain = select_chain(self)
-        if chain == Chain.TEST:
-            xprv = derive_xprv_from_mnemonic(mnemonic=hd['mnemonic'], path=hd['path'], chain=chain)
-            hd.update({
-                'name': f'HD 钱包 {len(self.account)}', 'xprv': str(xprv), 'receive_index': 0, 'receive_limit': 150, 'change_limit': 50,
-            })
-            self.add_wallet(hd)
-        elif chain == Chain.MAIN:
-            still_under_development(self)
-        else:
-            QMessageBox.critical(self, '错误', '新建钱包失败，没有选择网络。', QMessageBox.StandardButton.Ok)
+        hd.update({'name': f'HD 钱包 {len(self.account)}', 'receive_index': 0, 'receive_limit': 150, 'change_limit': 50, })
+        self.add_wallet(hd)
 
     def add_wallet(self, wallet: Dict):
         self.account.append(wallet)
