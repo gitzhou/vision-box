@@ -8,6 +8,7 @@ from mvclib.constants import Chain
 from mvclib.hd import validate_mnemonic, Xprv, Xpub, derive_xprv_from_mnemonic
 
 from designer.hd import Ui_dialogHdBackup
+from utils import xprv_valid as _xprv_valid, xpub_valid as _xpub_valid
 
 
 class Mode(str, Enum):
@@ -83,18 +84,10 @@ class HdUi(QDialog, Ui_dialogHdBackup):
         return True if match_groups else False
 
     def xprv_valid(self) -> bool:
-        with suppress(Exception):
-            xprv = Xprv(self.plainTextEditXprv.toPlainText().strip())
-            assert xprv.chain == self.chain
-            return True
-        return False
+        return _xprv_valid(xprv=self.plainTextEditXprv.toPlainText().strip(), chain=self.chain)
 
     def xpub_valid(self) -> bool:
-        with suppress(Exception):
-            xpub = Xpub(self.plainTextEditXpub.toPlainText().strip())
-            assert xpub.chain == self.chain
-            return True
-        return False
+        return _xpub_valid(xpub=self.plainTextEditXpub.toPlainText().strip(), chain=self.chain)
 
     def ok_button_clicked(self):
         self.mnemonic_path_passphrase_set.emit({

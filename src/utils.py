@@ -1,8 +1,11 @@
 import hashlib
 import json
-from typing import Dict, List
+from contextlib import suppress
+from typing import Dict, List, Optional
 
 from mvclib.aes import aes_encrypt_with_iv, aes_decrypt_with_iv
+from mvclib.constants import Chain
+from mvclib.hd import Xprv, Xpub
 
 COIN_DECIMAL = 8
 
@@ -43,3 +46,21 @@ def format_coin(amount: int, decimal: int = 8, decimal_digits: int = None, fixed
     if rstrip and '.' in s:
         s = s.rstrip('0').rstrip('.')
     return s
+
+
+def xprv_valid(xprv: str, chain: Optional[Chain] = None) -> bool:
+    with suppress(Exception):
+        xprv = Xprv(xprv)
+        if chain:
+            assert xprv.chain == chain
+        return True
+    return False
+
+
+def xpub_valid(xpub: str, chain: Optional[Chain] = None) -> bool:
+    with suppress(Exception):
+        xpub = Xpub(xpub)
+        if chain:
+            assert xpub.chain == chain
+        return True
+    return False

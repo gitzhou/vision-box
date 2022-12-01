@@ -50,8 +50,7 @@ class StartupUi(QWidget, Ui_formStartup):
         if self.account_file:
             dialog = SetPasswordUi()
             dialog.password_set.connect(self.new_account_file)
-            if not dialog.exec():
-                QMessageBox.critical(self, '错误', '密码未设置。', QMessageBox.StandardButton.Ok)
+            dialog.exec()
 
     def open_account_button_clicked(self):
         r = QFileDialog.getOpenFileName(parent=self, caption='打开账户', directory=str(Path.home()), filter='账户文件 (*.account)')
