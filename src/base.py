@@ -1,6 +1,6 @@
 from typing import Optional, List, Any, Dict
 
-from PyQt6 import QtCore
+from PyQt6 import QtCore, QtGui
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QInputDialog, QLineEdit, QApplication, QTableView, QHeaderView, QAbstractItemView, QMessageBox
 from PyQt6.QtWidgets import QWidget
@@ -17,6 +17,7 @@ def require_password(slot, account_name: str = '', **kwargs):
     account_name = f'“{account_name}”' if account_name else '文件'
     dialog.labelDescription.setText(f'账户{account_name}已加密，输入正确的密码解锁。')
     dialog.lineEdit.setEchoMode(QLineEdit.EchoMode.Password)
+    dialog.lineEdit.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[\x21-\x7E]*"), None))
     dialog.text_entered.connect(lambda password: slot(password, **kwargs))
     dialog.exec()
 

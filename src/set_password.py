@@ -1,4 +1,4 @@
-from PyQt6 import QtCore
+from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox
 
 from designer.set_password import Ui_dialogSetPassword
@@ -12,6 +12,8 @@ class SetPasswordUi(QDialog, Ui_dialogSetPassword):
         self.setupUi(self)
 
         self.lineEditPassword.setFocus()
+        self.lineEditPassword.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[\x21-\x7E]*"), self))
+        self.lineEditConfirm.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[\x21-\x7E]*"), self))
         self.setFixedSize(self.geometry().width(), self.geometry().height())
         self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
 
