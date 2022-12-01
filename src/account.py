@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, QInputDialog, QStackedLayout, QLabel, QMenu
 from mvclib.constants import BIP44_DERIVATION_PATH
-from mvclib.hd import mnemonic_from_entropy
+from mvclib.hd import mnemonic_from_entropy, Xprv
 
 from base import require_password, select_chain, font, activate, set_password
 from designer.account import Ui_mainWindowAccount
@@ -182,9 +182,12 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
     def wallet_list_context_menu(self, pos):
         menu = QMenu()
         action_rename = menu.addAction('重命名')
+        action_information = menu.addAction('信息')
         action = menu.exec(self.listViewWallets.mapToGlobal(pos))
         if action == action_rename:
             self.context_menu_action_rename_clicked()
+        elif action == action_information:
+            require_password(self, self.context_menu_action_information_clicked, self.password)
 
     def context_menu_action_rename_clicked(self):
         dialog = InputDialogUi()
@@ -201,3 +204,16 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.refresh_wallet_list()
         wallet_widget: WalletUi = self.stacked_layout.widget(index)
         wallet_widget.update_fields(w=self.account[index])
+
+    def context_menu_action_information_clicked(self):
+        w: Dict = self.account[self.listViewWallets.selectedIndexes()[0].row()]
+        if w.get('mnemonic'):
+            chain = Xprv(w['xprv']).chain
+            dialog = HdUi(mnemonic=w['mnemonic'], path=w['path'], passphrase=w['passphrase'], chain=chain)
+        elif w.get('xprv'):
+            dialog = HdUi(xprv=w['xprv'])
+        elif w.get('xpub'):
+            dialog = HdUi(xpub=w['xpub'])
+        else:
+            dialog = HdUi()  # TODO
+        dialog.exec()

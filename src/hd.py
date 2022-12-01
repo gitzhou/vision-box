@@ -21,7 +21,7 @@ class Mode(str, Enum):
 class HdUi(QDialog, Ui_dialogHdBackup):
     mnemonic_path_passphrase_set = QtCore.pyqtSignal(object)
 
-    def __init__(self, mnemonic: str = '', path: str = '', passphrase: str = '', xprv: str = '', xpub: str = '', chain: Chain = Chain.MAIN, mode: Mode = Mode.HD):
+    def __init__(self, mnemonic: str = '', path: str = '', passphrase: str = '', xprv: str = '', xpub: str = '', chain: Chain = Chain.MAIN, mode: Mode = Mode.Readonly):
         super(HdUi, self).__init__()
         self.setupUi(self)
 
