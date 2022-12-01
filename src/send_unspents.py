@@ -40,7 +40,7 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
         self.plainTextEditReceivers.textChanged.connect(self.receivers_text_changed)
         self.lineEditAmount.textChanged.connect(self.amount_text_changed)
         self.toolButtonMaxAmount.clicked.connect(self.max_amount_clicked)
-        self.pushButtonSend.clicked.connect(lambda: require_password(slot=self.send_transaction))
+        self.pushButtonSend.clicked.connect(lambda: require_password(self, self.send_transaction, self.password))
 
     def filter_lines(self):
         _lines = self.plainTextEditReceivers.toPlainText().splitlines()
@@ -101,25 +101,22 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
             for group in groups:
                 self.receivers.append((group[0], int(Decimal(group[1]) * 10 ** COIN_DECIMAL)))
 
-    def send_transaction(self, password: str):
-        if password != self.password:
-            QMessageBox.critical(self, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
-        else:
-            self.parse_receivers()
-            try:
-                t = create_transaction(unspents=self.unspents, outputs=self.receivers, leftover=self.change_address, combine=self.combine, chain=self.chain)
-                r = t.broadcast()
-                if r.propagated:
-                    QMessageBox.information(self, '信息', f'发送成功。\n\n{r.data}', QMessageBox.StandardButton.Ok)
-                    self.accept()
-                else:
-                    QMessageBox.critical(self, '错误', f'发送失败。\n\n{r.data}\n\n{t.hex()}', QMessageBox.StandardButton.Ok)
-            except InsufficientFunds as e:
-                _groups = re.findall(r'require (\d+) satoshi but only (\d+)', str(e))
-                _message = f'输入数量不足。\n\n共需要 {format_coin(_groups[0][0])} SPACE，\n但只有 {format_coin(_groups[0][1])} SPACE。'
-                QMessageBox.critical(self, '错误', _message, QMessageBox.StandardButton.Ok)
-            except Exception as e:
-                QMessageBox.critical(self, '错误', f'未知错误。\n\n{e}', QMessageBox.StandardButton.Ok)
+    def send_transaction(self):
+        self.parse_receivers()
+        try:
+            t = create_transaction(unspents=self.unspents, outputs=self.receivers, leftover=self.change_address, combine=self.combine, chain=self.chain)
+            r = t.broadcast()
+            if r.propagated:
+                QMessageBox.information(self, '信息', f'发送成功。\n\n{r.data}', QMessageBox.StandardButton.Ok)
+                self.accept()
+            else:
+                QMessageBox.critical(self, '错误', f'发送失败。\n\n{r.data}\n\n{t.hex()}', QMessageBox.StandardButton.Ok)
+        except InsufficientFunds as e:
+            _groups = re.findall(r'require (\d+) satoshi but only (\d+)', str(e))
+            _message = f'输入数量不足。\n\n共需要 {format_coin(_groups[0][0])} SPACE，\n但只有 {format_coin(_groups[0][1])} SPACE。'
+            QMessageBox.critical(self, '错误', _message, QMessageBox.StandardButton.Ok)
+        except Exception as e:
+            QMessageBox.critical(self, '错误', f'未知错误。\n\n{e}', QMessageBox.StandardButton.Ok)
 
     def max_amount_clicked(self):
         t = Transaction(chain=self.chain).add_inputs(self.unspents).add_change()

@@ -7,9 +7,8 @@ from typing import List, Dict
 from PyQt6.QtWidgets import QWidget, QFileDialog, QMessageBox
 
 from account import AccountUi
-from base import require_password, activate
+from base import require_password, activate, set_password
 from designer.startup import Ui_formStartup
-from set_password import SetPasswordUi
 from utils import write_account_file, read_account_file
 
 welcome = """Vision Box
@@ -48,15 +47,13 @@ class StartupUi(QWidget, Ui_formStartup):
         r = QFileDialog.getSaveFileName(parent=self, caption='新建账户', directory=str(Path.home()), filter='账户文件 (*.account)')
         self.account_file = r[0]
         if self.account_file:
-            dialog = SetPasswordUi()
-            dialog.password_set.connect(self.new_account_file)
-            dialog.exec()
+            set_password(self.new_account_file)
 
     def open_account_button_clicked(self):
         r = QFileDialog.getOpenFileName(parent=self, caption='打开账户', directory=str(Path.home()), filter='账户文件 (*.account)')
         self.account_file = r[0]
         if self.account_file:
-            require_password(slot=self.open_account_file, account_name=Path(self.account_file).stem)
+            require_password(self, self.open_account_file)
 
     def new_account_file(self, password: str):
         try:

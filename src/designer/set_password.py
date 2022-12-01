@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_dialogSetPassword(object):
     def setupUi(self, dialogSetPassword):
         dialogSetPassword.setObjectName("dialogSetPassword")
-        dialogSetPassword.resize(400, 180)
+        dialogSetPassword.resize(500, 180)
         self.gridLayout = QtWidgets.QGridLayout(dialogSetPassword)
         self.gridLayout.setObjectName("gridLayout")
         self.labelDescription = QtWidgets.QLabel(dialogSetPassword)

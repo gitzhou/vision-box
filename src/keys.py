@@ -2,7 +2,7 @@ import random
 from typing import List, Optional, Any, Union, Dict
 
 from PyQt6 import QtCore
-from PyQt6.QtWidgets import QWidget, QTableView, QPushButton, QMessageBox
+from PyQt6.QtWidgets import QWidget, QTableView, QPushButton
 from mvclib import Unspent
 from mvclib.hd import Xprv, Xpub, derive_xkeys_from_xkey
 
@@ -102,7 +102,7 @@ class KeysUi(QWidget, Ui_widgetKeys):
         self.pushButtonReceiveCopy.clicked.connect(lambda: copy_table_selected(self.tableViewReceive))
         self.pushButtonReceiveSelectAll.clicked.connect(lambda: table_select_all(self.tableViewReceive))
         self.pushButtonReceiveKey.setEnabled(False)
-        self.pushButtonReceiveKey.clicked.connect(lambda: require_password(self.key_button_clicked, t=self.tableViewReceive, xkeys=self.receive_xkeys))
+        self.pushButtonReceiveKey.clicked.connect(lambda: require_password(self, KeysUi.key_button_clicked, self.password, t=self.tableViewReceive, xkeys=self.receive_xkeys))
 
         self.tableViewChange.selectionModel().selectionChanged.connect(lambda: self.enable_change_send_button())
         self.tableViewChange.selectionModel().selectionChanged.connect(lambda: KeysUi.enable_key_button(self.pushButtonChangeKey, self.tableViewChange))
@@ -112,7 +112,7 @@ class KeysUi(QWidget, Ui_widgetKeys):
         self.pushButtonChangeCopy.clicked.connect(lambda: copy_table_selected(self.tableViewChange))
         self.pushButtonChangeSelectAll.clicked.connect(lambda: table_select_all(self.tableViewChange))
         self.pushButtonChangeKey.setEnabled(False)
-        self.pushButtonChangeKey.clicked.connect(lambda: require_password(self.key_button_clicked, t=self.tableViewChange, xkeys=self.change_xkeys))
+        self.pushButtonChangeKey.clicked.connect(lambda: require_password(self, KeysUi.key_button_clicked, self.password, t=self.tableViewChange, xkeys=self.change_xkeys))
 
     def enable_receive_send_button(self):
         self.pushButtonReceiveSend.setEnabled(len(self.unspents_selected(self.tableViewReceive)) > 0 and type(self.xkey) is Xprv)
@@ -158,18 +158,16 @@ class KeysUi(QWidget, Ui_widgetKeys):
         rows = set(index.row() for index in t.selectionModel().selection().indexes())
         b.setEnabled(len(rows) == 1)
 
-    def key_button_clicked(self, password: str, t: QTableView, xkeys: List[Union[Xpub, Xprv]]):
-        if password != self.password:
-            QMessageBox.critical(self, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
-        else:
-            row = t.selectionModel().selection().indexes()[0].row()
-            address = t.model().index(row, 2).data()
-            dialog = InputDialogUi()
-            dialog.setWindowTitle('私钥')
-            dialog.labelDescription.setText(f'地址 {address} 对应的私钥是：')
-            for xkey in xkeys:
-                if xkey.address() == address:
-                    dialog.lineEdit.setText(xkey.private_key().wif())
-                    break
-            dialog.lineEdit.setReadOnly(True)
-            dialog.exec()
+    @classmethod
+    def key_button_clicked(cls, t: QTableView, xkeys: List[Union[Xpub, Xprv]]):
+        row = t.selectionModel().selection().indexes()[0].row()
+        address = t.model().index(row, 2).data()
+        dialog = InputDialogUi()
+        dialog.setWindowTitle('私钥')
+        dialog.labelDescription.setText(f'地址 {address} 对应的私钥是：')
+        for xkey in xkeys:
+            if xkey.address() == address:
+                dialog.lineEdit.setText(xkey.private_key().wif())
+                break
+        dialog.lineEdit.setReadOnly(True)
+        dialog.exec()

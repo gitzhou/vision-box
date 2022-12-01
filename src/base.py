@@ -1,4 +1,4 @@
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Callable
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtGui import QFont
@@ -8,21 +8,36 @@ from mvclib import Unspent
 from mvclib.constants import Chain
 
 from input_dialog import InputDialogUi
+from set_password import SetPasswordUi
 from utils import format_coin
 
 
-def require_password(slot, account_name: str = '', **kwargs):
+def require_password(parent: QWidget, callback: Callable, password: Optional[str] = None, **kwargs):
     dialog = InputDialogUi()
     dialog.setWindowTitle('密码')
-    account_name = f'“{account_name}”' if account_name else '文件'
-    dialog.labelDescription.setText(f'账户{account_name}已加密，输入正确的密码解锁。')
+    dialog.labelDescription.setText(f'账户文件已加密，输入正确的密码解锁。')
     dialog.lineEdit.setEchoMode(QLineEdit.EchoMode.Password)
     dialog.lineEdit.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[\x21-\x7E]*"), None))
-    dialog.text_entered.connect(lambda password: slot(password, **kwargs))
+    dialog.text_entered.connect(lambda text: _require_password(parent, callback, text, password, **kwargs))
     dialog.exec()
 
 
-def activate(slot):
+def _require_password(parent: QWidget, callback: Callable, text: str, password: Optional[str] = None, **kwargs):
+    if password is None:
+        callback(**{**kwargs, 'password': text})
+    elif text == password:
+        callback(**kwargs)
+    else:
+        QMessageBox.critical(parent, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
+
+
+def set_password(callback: Callable):
+    dialog = SetPasswordUi()
+    dialog.password_set.connect(callback)
+    dialog.exec()
+
+
+def activate(slot: Callable):
     dialog = InputDialogUi()
     dialog.setWindowTitle('激活')
     dialog.labelDescription.setText(f'输入客户端密钥。')

@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_formStartup(object):
     def setupUi(self, formStartup):
         formStartup.setObjectName("formStartup")
-        formStartup.resize(500, 350)
+        formStartup.resize(550, 350)
         self.gridLayout = QtWidgets.QGridLayout(formStartup)
         self.gridLayout.setObjectName("gridLayout")
         self.horizontalLayout = QtWidgets.QHBoxLayout()

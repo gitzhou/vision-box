@@ -6,11 +6,10 @@ from PyQt6.QtWidgets import QMainWindow, QMessageBox, QInputDialog, QStackedLayo
 from mvclib.constants import BIP44_DERIVATION_PATH
 from mvclib.hd import mnemonic_from_entropy
 
-from base import require_password, select_chain, font, activate
+from base import require_password, select_chain, font, activate, set_password
 from designer.account import Ui_mainWindowAccount
 from hd import HdUi, Mode
 from input_dialog import InputDialogUi
-from set_password import SetPasswordUi
 from utils import write_account_file, xprv_valid
 from wallet import WalletUi
 
@@ -57,9 +56,9 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.widget.setLayout(self.stacked_layout)
 
         self.actionActivate.triggered.connect(lambda: activate(self.update_client_key))
-        self.actionChangePassword.triggered.connect(lambda: require_password(self.action_change_password_clicked))
-        self.pushButtonNew.clicked.connect(lambda: require_password(slot=self.new_wallet_clicked))
-        self.pushButtonImport.clicked.connect(lambda: require_password(slot=self.import_wallet_clicked))
+        self.actionChangePassword.triggered.connect(lambda: require_password(self, self.action_change_password_clicked, self.password))
+        self.pushButtonNew.clicked.connect(lambda: require_password(self, self.new_wallet_clicked, self.password))
+        self.pushButtonImport.clicked.connect(lambda: require_password(self, self.import_wallet_clicked, self.password))
 
         network = QLabel()
         network.setText('网络连接：')
@@ -90,14 +89,8 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
             w: WalletUi = self.stacked_layout.widget(i)
             w.update_fields(app_settings=self.app_settings)
 
-    def action_change_password_clicked(self, password: str):
-        if password != self.password:
-            QMessageBox.critical(self, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
-        else:
-            dialog = SetPasswordUi()
-            dialog.password_set.connect(self.change_password)
-            if not dialog.exec():
-                QMessageBox.critical(self, '错误', '密码修改失败，没有设置新密码。', QMessageBox.StandardButton.Ok)
+    def action_change_password_clicked(self):
+        set_password(self.change_password)
 
     def change_password(self, password: str):
         self.password = password
@@ -120,36 +113,30 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
             # 显示对应的控件
             self.stacked_layout.setCurrentIndex(index)
 
-    def new_wallet_clicked(self, password: str):
-        if password != self.password:
-            QMessageBox.critical(self, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
-        else:
-            chain = select_chain(self)
-            if chain:
-                dialog = HdUi(mnemonic=mnemonic_from_entropy(), path=BIP44_DERIVATION_PATH, chain=chain, mode=Mode.Readonly)
-                dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
-                dialog.exec()
+    def new_wallet_clicked(self):
+        chain = select_chain(self)
+        if chain:
+            dialog = HdUi(mnemonic=mnemonic_from_entropy(), path=BIP44_DERIVATION_PATH, chain=chain, mode=Mode.Readonly)
+            dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
+            dialog.exec()
 
-    def import_wallet_clicked(self, password: str):
-        if password != self.password:
-            QMessageBox.critical(self, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
-        else:
-            # 导入类型
-            _hd, _ = '助记词', '其它（扩展私钥）'
-            selected, ok = QInputDialog.getItem(self, '钱包类型', '导入何种钱包？', [_hd, _], 0, False)
-            if ok:
-                if selected == _hd:
-                    chain = select_chain(self)
-                    if chain:
-                        dialog = HdUi(chain=chain, mode=Mode.HD)
-                        dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
-                        dialog.exec()
-                elif selected == _:
-                    dialog = InputDialogUi(validator=AccountUi.wallet_import_input_valid)
-                    dialog.setWindowTitle('导入')
-                    dialog.labelDescription.setText(f'通过其它方式导入钱包。')
-                    dialog.text_entered.connect(self.import_wallet)
+    def import_wallet_clicked(self):
+        _hd, _ = '助记词', '其它（扩展私钥）'
+        selected, ok = QInputDialog.getItem(self, '钱包类型', '导入何种钱包？', [_hd, _], 0, False)
+        if ok:
+            if selected == _hd:
+                chain = select_chain(self)
+                if chain:
+                    dialog = HdUi(chain=chain, mode=Mode.HD)
+                    dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
                     dialog.exec()
+            elif selected == _:
+                dialog = InputDialogUi(validator=AccountUi.wallet_import_input_valid)
+                dialog.setWindowTitle('导入')
+                dialog.setFixedWidth(950)
+                dialog.labelDescription.setText(f'通过其它方式导入钱包。')
+                dialog.text_entered.connect(self.import_wallet)
+                dialog.exec()
 
     @classmethod
     def wallet_import_input_valid(cls, text) -> bool:
