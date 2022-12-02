@@ -13,7 +13,9 @@ class SetPasswordUi(QDialog, Ui_dialogSetPassword):
 
         self.lineEditPassword.setFocus()
         self.lineEditPassword.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[\x21-\x7E]*"), self))
+        self.lineEditPassword.setMaxLength(150)
         self.lineEditConfirm.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[\x21-\x7E]*"), self))
+        self.lineEditConfirm.setMaxLength(150)
         self.setFixedSize(self.geometry().width(), self.geometry().height())
         self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
 

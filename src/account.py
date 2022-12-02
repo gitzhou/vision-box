@@ -134,7 +134,6 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
             elif selected == _:
                 dialog = InputDialogUi(validator=AccountUi.wallet_import_input_valid)
                 dialog.setWindowTitle('导入')
-                dialog.setFixedWidth(950)
                 dialog.labelDescription.setText(f'通过其它方式导入钱包。')
                 dialog.text_entered.connect(self.import_wallet)
                 dialog.exec()

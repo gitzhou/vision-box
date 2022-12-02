@@ -20,14 +20,27 @@ class InputDialogUi(QDialog, Ui_dialogInput):
         self.validator = validator if validator else _not_blank
 
         self.setFixedSize(self.geometry().width(), self.geometry().height())
+        self.minimum_width = self.geometry().width()
         self.labelDescription.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         self.lineEdit.textChanged.connect(self.enable_ok_button)
+        self.lineEdit.textChanged.connect(self.resize_to_content)
+        self.lineEdit.setMaxLength(150)
         self.lineEdit.setFocus()
         self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
         self.buttonBox.accepted.connect(self.emit_text)
 
     def enable_ok_button(self):
         self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(self.validator(self.lineEdit.text().strip()))
+
+    def resize_to_content(self):
+        fm = self.lineEdit.fontMetrics()
+        width = max(fm.boundingRect(self.lineEdit.text().strip()).width() + 80, self.minimum_width)
+        x = self.geometry().x() - (width - self.geometry().width()) // 2
+        if x > 0:
+            g = self.geometry()
+            g.setX(x)
+            self.setGeometry(g)
+        self.setFixedSize(width, self.geometry().height())
 
     def emit_text(self):
         self.text_entered.emit(self.lineEdit.text().strip())
