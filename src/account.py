@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Optional
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import QMainWindow, QMessageBox, QInputDialog, QStackedLayout, QLabel, QMenu
+from mvclib import PublicKey
 from mvclib.constants import BIP44_DERIVATION_PATH
 from mvclib.hd import mnemonic_from_entropy, Xprv
 
@@ -10,7 +11,7 @@ from base import require_password, select_chain, font, activate, set_password
 from designer.account import Ui_mainWindowAccount
 from hd import HdUi, Mode
 from input_dialog import InputDialogUi
-from utils import write_account_file, xprv_valid
+from utils import write_account_file, xprv_valid, xpub_valid, wif_valid, address_valid, pk_valid
 from wallet import WalletUi
 
 
@@ -121,7 +122,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
             dialog.exec()
 
     def import_wallet_clicked(self):
-        _hd, _ = '助记词', '其它（扩展私钥）'
+        _hd, _ = '助记词', '其它（扩展私钥 / 私钥 / 扩展公钥 / 公钥 / 地址）'
         selected, ok = QInputDialog.getItem(self, '钱包类型', '导入何种钱包？', [_hd, _], 0, False)
         if ok:
             if selected == _hd:
@@ -140,15 +141,29 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
 
     @classmethod
     def wallet_import_input_valid(cls, text) -> bool:
-        return xprv_valid(text)
+        return xprv_valid(text) or xpub_valid(text) or wif_valid(text) or address_valid(text) or pk_valid(text)
 
     def import_wallet(self, text: str):
-        if text.startswith('xprv') or text.startswith('tprv'):
+        if text.startswith(('xprv', 'tprv')):
             self.add_hd({'xprv': text})
+        elif text.startswith(('xpub', 'tpub')):
+            self.add_hd({'xpub': text})
+        elif text.startswith(('L', 'K', '5', 'c', '9')):
+            self.add_key({'wif': text})
+        elif text.startswith(('02', '03', '04')):
+            chain = select_chain(self)
+            if chain:
+                self.add_key({'pk': text, 'address': PublicKey(text).address(chain=chain)})
+        else:
+            self.add_key({'address': text})
 
     def add_hd(self, hd: Dict):
         hd.update({'name': f'HD 钱包 {len(self.account) + 1}', 'receive_index': 0, 'receive_limit': 150, 'change_limit': 50, })
         self.add_wallet(hd)
+
+    def add_key(self, single: Dict):
+        single.update({'name': f'钱包 {len(self.account) + 1}'})
+        self.add_wallet(single)
 
     def add_wallet(self, wallet: Dict):
         self.account.append(wallet)

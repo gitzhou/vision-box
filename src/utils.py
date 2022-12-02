@@ -3,9 +3,11 @@ import json
 from contextlib import suppress
 from typing import Dict, List, Optional
 
+from mvclib import PublicKey
 from mvclib.aes import aes_encrypt_with_iv, aes_decrypt_with_iv
 from mvclib.constants import Chain
 from mvclib.hd import Xprv, Xpub
+from mvclib.utils import decode_wif, decode_address
 
 COIN_DECIMAL = 8
 
@@ -50,17 +52,44 @@ def format_coin(amount: int, decimal: int = 8, decimal_digits: int = None, fixed
 
 def xprv_valid(xprv: str, chain: Optional[Chain] = None) -> bool:
     with suppress(Exception):
-        xprv = Xprv(xprv)
+        _xprv = Xprv(xprv)
         if chain:
-            assert xprv.chain == chain
+            assert _xprv.chain == chain
         return True
     return False
 
 
 def xpub_valid(xpub: str, chain: Optional[Chain] = None) -> bool:
     with suppress(Exception):
-        xpub = Xpub(xpub)
+        _xpub = Xpub(xpub)
         if chain:
-            assert xpub.chain == chain
+            assert _xpub.chain == chain
+        return True
+    return False
+
+
+def wif_valid(wif: str, compressed: Optional[bool] = None, chain: Optional[Chain] = None) -> bool:
+    with suppress(Exception):
+        _, _compressed, _chain = decode_wif(wif)
+        if compressed is not None:
+            assert _compressed == compressed
+        if chain:
+            assert _chain == chain
+        return True
+    return False
+
+
+def address_valid(address: str, chain: Optional[Chain] = None) -> bool:
+    with suppress(Exception):
+        _, _chain = decode_address(address)
+        if chain:
+            assert _chain == chain
+        return True
+    return False
+
+
+def pk_valid(pk: str) -> bool:
+    with suppress(Exception):
+        PublicKey(pk)
         return True
     return False

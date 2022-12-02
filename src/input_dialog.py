@@ -27,7 +27,7 @@ class InputDialogUi(QDialog, Ui_dialogInput):
         self.buttonBox.accepted.connect(self.emit_text)
 
     def enable_ok_button(self):
-        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(self.validator(self.lineEdit.text()))
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(self.validator(self.lineEdit.text().strip()))
 
     def emit_text(self):
-        self.text_entered.emit(self.lineEdit.text())
+        self.text_entered.emit(self.lineEdit.text().strip())

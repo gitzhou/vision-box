@@ -1,16 +1,18 @@
 import random
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import QWidget
-from mvclib import WalletLite, Unspent, Key
+from mvclib import Unspent, Key
 from mvclib.constants import Chain
-from mvclib.hd import Xprv, derive_xkeys_from_xkey
+from mvclib.hd import Xprv, derive_xkeys_from_xkey, Xpub
+from mvclib.service import MetaSV
+from mvclib.utils import decode_address
 
 from base import copy_to_clipboard, set_table_view, still_under_development, UnspentModel, FtModel, copy_table_selected, table_select_all
 from designer.wallet import Ui_formWallet
 from keys import KeysUi
-from metasv import ft_balance
+from metasv import ft_balance, TIMEOUT
 from send_unspents import SendUnspentsUi
 from utils import format_coin
 
@@ -18,17 +20,35 @@ from utils import format_coin
 class RefreshUnspentThread(QtCore.QThread):
     refreshed = QtCore.pyqtSignal(object)
 
-    def __init__(self, xprv: Xprv, client_key: str):
+    def __init__(self, key: Union[Xprv, Xpub, Key, str], client_key: str):
         super(RefreshUnspentThread, self).__init__()
-        self.w = None
-        self.update_fields(xprv, client_key)
+        self.kwargs = {'throw': True}
+        if type(key) is Xprv:
+            self.kwargs.update({'xprv': key})
+            self.chain = key.chain
+            self.xkey = True
+        elif type(key) is Xpub:
+            self.kwargs.update({'xpub': key})
+            self.chain = key.chain
+            self.xkey = True
+        elif type(key) is Key:
+            self.kwargs.update({'private_keys': [key]})
+            self.chain = key.chain
+            self.xkey = False
+        else:
+            self.kwargs.update({'address': key})
+            _, self.chain = decode_address(key)
+            self.xkey = False
+        self.provider = None
+        self.update_fields(client_key)
 
-    def update_fields(self, xprv: Xprv, client_key: str):
-        self.w = WalletLite(xprv, client_key=client_key or '-')
+    def update_fields(self, client_key: str):
+        self.provider = MetaSV(chain=self.chain, timeout=TIMEOUT, client_key=client_key)
 
     def run(self):
         try:
-            self.refreshed.emit(self.w.get_unspents(refresh=True, throw=True))
+            unspents = self.provider.get_xpub_unspents(**self.kwargs) if self.xkey else self.provider.get_unspents(**self.kwargs)
+            self.refreshed.emit([Unspent(**unspent) for unspent in unspents])
         except Exception as e:
             print(f'refresh unspent thread exception: {e}')
             self.refreshed.emit(None)
@@ -37,21 +57,18 @@ class RefreshUnspentThread(QtCore.QThread):
 class RefreshFtThread(QtCore.QThread):
     refreshed = QtCore.pyqtSignal(object)
 
-    def __init__(self, k: Key, client_key: str):
+    def __init__(self, address: str, client_key: str):
         super(RefreshFtThread, self).__init__()
-        self.address = None
-        self.chain = None
+        self.address = address
         self.client_key = None
-        self.update_fields(k, client_key)
+        self.update_fields(client_key)
 
-    def update_fields(self, k: Key, client_key: str):
-        self.address = k.address()
-        self.chain = k.chain
+    def update_fields(self, client_key: str):
         self.client_key = client_key or '-'
 
     def run(self):
         try:
-            self.refreshed.emit(ft_balance(self.address, self.chain, self.client_key, throw=True))
+            self.refreshed.emit(ft_balance(self.address, self.client_key, throw=True))
         except Exception as e:
             print(f'refresh ft thread exception: {e}')
             self.refreshed.emit(None)
@@ -69,25 +86,45 @@ class WalletUi(QWidget, Ui_formWallet):
         self.password = password
         self.w: Dict = w
         self.account_index: int = account_index
-        self.xprv = Xprv(self.w['xprv'])
-        self.k: Key = derive_xkeys_from_xkey(self.xprv, 0, 1, 0)[0].private_key()
-        self.chain: Chain = self.xprv.chain
-        self.keys_widget = KeysUi(self.password, self.w)
-        self.keys_widget.request_refresh.connect(self.refresh_button_clicked)
-        self.send_unspents_dialog = None
+
+        self.xkey: Union[Xprv, Xpub, None] = None
+        self.key: Optional[Key] = None
+        self.address: str = ''
+        if w.get('xprv'):
+            self.xkey = Xprv(w['xprv'])
+            self.key = derive_xkeys_from_xkey(self.xkey, 0, 1, 0)[0].private_key()
+            self.address = self.key.address()
+        elif w.get('xpub'):
+            self.xkey = Xpub(w['xpub'])
+            self.address = derive_xkeys_from_xkey(self.xkey, 0, 1, 0)[0].address()
+        elif w.get('wif'):
+            self.key = Key(w['wif'])
+            self.address = self.key.address()
+        else:
+            self.address = w['address']
+        _, self.chain = decode_address(self.address)
+
+        if self.xkey:
+            self.keys_widget = KeysUi(self.password, self.w)
+            self.keys_widget.request_refresh.connect(self.refresh_button_clicked)
+            unspent_address = derive_xkeys_from_xkey(self.xkey, self.w['receive_index'], self.w['receive_index'] + 1, 0)[0].address()
+        else:
+            self.keys_widget = None
+            unspent_address = self.address
 
         self.labelUnspentBalance.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         self.labelUnspentSymbol.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         self.labelUnspentAddress.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         self.labelFtAddress.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
 
-        self.labelChain.setText('（测试网）' if self.chain == Chain.TEST else '（主网）')
-        unspent_address = derive_xkeys_from_xkey(self.xprv, self.w['receive_index'], self.w['receive_index'] + 1, 0)[0].address()
+        watch_only_hint = '（观察钱包）' if self.key is None else ''
+        chain_hint = '（测试网）' if self.chain == Chain.TEST else '（主网）'
+        self.labelHint.setText(chain_hint + watch_only_hint)
         self.labelUnspentAddress.setText(unspent_address)
-        self.labelFtAddress.setText(self.k.address())
+        self.labelFtAddress.setText(self.address)
         self.toolBox.setCurrentIndex(0)
 
-        self.refresh_unspent_thread = RefreshUnspentThread(self.xprv, self.app_settings['client_key'])
+        self.refresh_unspent_thread = RefreshUnspentThread(self.xkey or self.key or self.address, self.app_settings['client_key'])
         self.refresh_unspent_thread.refreshed.connect(self.refresh_unspent_table_and_balance)
         self.unspent_model = UnspentModel()
         self.tableViewUnspent.setModel(self.unspent_model)
@@ -101,7 +138,7 @@ class WalletUi(QWidget, Ui_formWallet):
         self.pushButtonUnspentCopy.clicked.connect(lambda: copy_table_selected(self.tableViewUnspent))
         self.pushButtonUnspentSelectAll.clicked.connect(lambda: table_select_all(self.tableViewUnspent))
 
-        self.refresh_ft_thread = RefreshFtThread(self.k, self.app_settings['client_key'])
+        self.refresh_ft_thread = RefreshFtThread(self.address, self.app_settings['client_key'])
         self.refresh_ft_thread.refreshed.connect(self.refresh_ft_table)
         self.ft_model = FtModel()
         self.tableViewFt.setModel(self.ft_model)
@@ -121,9 +158,16 @@ class WalletUi(QWidget, Ui_formWallet):
         self.pushButtonRefresh.clicked.connect(self.refresh_button_clicked)
         self.refresh_button_clicked()
 
+        if self.key is None:
+            self.pushButtonUnspentSend.setVisible(False)
+            self.pushButtonFtSend.setVisible(False)
+        if self.xkey is None:
+            self.toolButtonUnspentAddressChange.setVisible(False)
+            self.toolButtonUnspentKeys.setVisible(False)
+
     def unspent_address_change_button_clicked(self):
         self.w['receive_index'] = (self.w['receive_index'] + 1) % self.w['receive_limit']
-        unspent_address = derive_xkeys_from_xkey(self.xprv, self.w['receive_index'], self.w['receive_index'] + 1, 0)[0].address()
+        unspent_address = derive_xkeys_from_xkey(self.xkey, self.w['receive_index'], self.w['receive_index'] + 1, 0)[0].address()
         self.labelUnspentAddress.setText(unspent_address)
         self.wallet_updated.emit(self.w, self.account_index)
 
@@ -142,7 +186,8 @@ class WalletUi(QWidget, Ui_formWallet):
             self.refresh_ft_thread.start()
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
-        self.keys_widget.close()
+        if self.keys_widget:
+            self.keys_widget.close()
         super().closeEvent(a0)
 
     def refresh_unspent_table_and_balance(self, unspents: Optional[List[Unspent]]):
@@ -153,17 +198,21 @@ class WalletUi(QWidget, Ui_formWallet):
             self.labelUnspentBalance.setText(format_coin(sum([unspent.satoshi for unspent in unspents])))
             self.toolBox.setItemText(self.toolBox.indexOf(self.pageUnspent), f'UTXO（{len(unspents)}）' if unspents else 'UTXO')
             self.pushButtonUnspentSend.setEnabled(len(unspents) > 0)
-        self.keys_widget.update_fields(unspents=unspents)
         self.network_status_updated.emit(unspents is not None)
+        if self.keys_widget:
+            self.keys_widget.update_fields(unspents=unspents)
 
     def unspent_send_button_clicked(self):
         unspents_selected = self.unspents_selected()
         combine = True if len(unspents_selected) > 0 else False
         unspents = unspents_selected or self.unspent_model.unspents
-        change_index = random.randrange(0, self.w['change_limit'])
-        change_address = derive_xkeys_from_xkey(self.xprv, change_index, change_index + 1, 1)[0].address()
-        self.send_unspents_dialog = SendUnspentsUi(self.password, unspents, self.chain, change_address, combine)
-        if self.send_unspents_dialog.exec():
+        if self.xkey:
+            change_index = random.randrange(0, self.w['change_limit'])
+            change_address = derive_xkeys_from_xkey(self.xkey, change_index, change_index + 1, 1)[0].address()
+        else:
+            change_address = self.address
+        send_unspents_dialog = SendUnspentsUi(self.password, unspents, self.chain, change_address, combine)
+        if send_unspents_dialog.exec():
             self.tableViewUnspent.clearSelection()
             self.refresh_button_clicked()
 
@@ -198,12 +247,14 @@ class WalletUi(QWidget, Ui_formWallet):
     def update_fields(self, app_settings: Optional[Dict] = None, password: Optional[str] = None, w: Optional[Dict] = None):
         if app_settings is not None:
             self.app_settings = app_settings
-            self.refresh_unspent_thread.update_fields(self.xprv, self.app_settings['client_key'])
-            self.refresh_ft_thread.update_fields(self.k, self.app_settings['client_key'])
+            self.refresh_unspent_thread.update_fields(self.app_settings['client_key'])
+            self.refresh_ft_thread.update_fields(self.app_settings['client_key'])
             self.refresh_button_clicked()
         if password is not None:
             self.password = password
-            self.keys_widget.update_fields(password=self.password)
+            if self.keys_widget:
+                self.keys_widget.update_fields(password=self.password)
         if w is not None:
             self.w = w
-            self.keys_widget.update_fields(w=self.w)
+            if self.keys_widget:
+                self.keys_widget.update_fields(w=self.w)

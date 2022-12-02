@@ -114,11 +114,17 @@ class KeysUi(QWidget, Ui_widgetKeys):
         self.pushButtonChangeKey.setEnabled(False)
         self.pushButtonChangeKey.clicked.connect(lambda: require_password(self, KeysUi.key_button_clicked, self.password, t=self.tableViewChange, xkeys=self.change_xkeys))
 
+        if type(self.xkey) is Xpub:
+            self.pushButtonReceiveSend.setVisible(False)
+            self.pushButtonReceiveKey.setVisible(False)
+            self.pushButtonChangeSend.setVisible(False)
+            self.pushButtonChangeKey.setVisible(False)
+
     def enable_receive_send_button(self):
-        self.pushButtonReceiveSend.setEnabled(len(self.unspents_selected(self.tableViewReceive)) > 0 and type(self.xkey) is Xprv)
+        self.pushButtonReceiveSend.setEnabled(len(self.unspents_selected(self.tableViewReceive)) > 0)
 
     def enable_change_send_button(self):
-        self.pushButtonChangeSend.setEnabled(len(self.unspents_selected(self.tableViewChange)) > 0 and type(self.xkey) is Xprv)
+        self.pushButtonChangeSend.setEnabled(len(self.unspents_selected(self.tableViewChange)) > 0)
 
     def update_fields(self, password: Optional[str] = None, w: Optional[Dict] = None, unspents: Optional[List[Unspent]] = None):
         if password is not None:
