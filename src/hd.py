@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QDialog
 from mvclib.constants import Chain
 from mvclib.hd import validate_mnemonic, Xprv, Xpub, derive_xprv_from_mnemonic
 
-from designer.hd import Ui_dialogHdBackup
+from designer.hd import Ui_dialogHd
 from utils import xprv_valid as _xprv_valid, xpub_valid as _xpub_valid
 
 
@@ -18,7 +18,7 @@ class Mode(str, Enum):
     Readonly = 'readonly'
 
 
-class HdUi(QDialog, Ui_dialogHdBackup):
+class HdUi(QDialog, Ui_dialogHd):
     mnemonic_path_passphrase_set = QtCore.pyqtSignal(object)
 
     def __init__(self, mnemonic: str = '', path: str = '', passphrase: str = '', xprv: str = '', xpub: str = '', chain: Chain = Chain.MAIN, mode: Mode = Mode.Readonly):

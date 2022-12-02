@@ -11,6 +11,7 @@ from base import require_password, select_chain, font, activate, set_password
 from designer.account import Ui_mainWindowAccount
 from hd import HdUi, Mode
 from input_dialog import InputDialogUi
+from key import KeyUi
 from utils import write_account_file, xprv_valid, xpub_valid, wif_valid, address_valid, pk_valid
 from wallet import WalletUi
 
@@ -118,6 +119,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         chain = select_chain(self)
         if chain:
             dialog = HdUi(mnemonic=mnemonic_from_entropy(), path=BIP44_DERIVATION_PATH, chain=chain, mode=Mode.Readonly)
+            dialog.setWindowTitle('立刻！马上！备份你的「助记词」「衍生路径」「助记词密码」')
             dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
             dialog.exec()
 
@@ -129,6 +131,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
                 chain = select_chain(self)
                 if chain:
                     dialog = HdUi(chain=chain, mode=Mode.HD)
+                    dialog.setWindowTitle('通过助记词导入钱包')
                     dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
                     dialog.exec()
             elif selected == _:
@@ -228,6 +231,11 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
             dialog = HdUi(xprv=w['xprv'])
         elif w.get('xpub'):
             dialog = HdUi(xpub=w['xpub'])
+        elif w.get('wif'):
+            dialog = KeyUi(wif=w['wif'])
+        elif w.get('pk'):
+            dialog = KeyUi(pk=w['pk'], address=w['address'])
         else:
-            dialog = HdUi()  # TODO
+            dialog = KeyUi(address=w['address'])
+        dialog.setWindowTitle(f'钱包：{w["name"]}')
         dialog.exec()

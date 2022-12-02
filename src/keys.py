@@ -8,7 +8,7 @@ from mvclib.hd import Xprv, Xpub, derive_xkeys_from_xkey
 
 from base import font, set_table_view, copy_table_selected, table_select_all, require_password
 from designer.keys import Ui_widgetKeys
-from input_dialog import InputDialogUi
+from key import KeyUi
 from send_unspents import SendUnspentsUi
 from utils import format_coin
 
@@ -168,12 +168,8 @@ class KeysUi(QWidget, Ui_widgetKeys):
     def key_button_clicked(cls, t: QTableView, xkeys: List[Union[Xpub, Xprv]]):
         row = t.selectionModel().selection().indexes()[0].row()
         address = t.model().index(row, 2).data()
-        dialog = InputDialogUi()
-        dialog.setWindowTitle('私钥')
-        dialog.labelDescription.setText(f'地址 {address} 对应的私钥是：')
         for xkey in xkeys:
             if xkey.address() == address:
-                dialog.lineEdit.setText(xkey.private_key().wif())
+                dialog = KeyUi(wif=xkey.private_key().wif())
+                dialog.exec()
                 break
-        dialog.lineEdit.setReadOnly(True)
-        dialog.exec()
