@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable
 
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import QDialog, QDialogButtonBox
@@ -13,11 +13,11 @@ def _not_blank(s: str) -> bool:
 class InputDialogUi(QDialog, Ui_dialogInput):
     text_entered = QtCore.pyqtSignal(str)
 
-    def __init__(self, validator: Optional[Callable[[str], bool]] = None):
+    def __init__(self, validator: Callable[[str], bool] = _not_blank):
         super(InputDialogUi, self).__init__()
         self.setupUi(self)
 
-        self.validator = validator if validator else _not_blank
+        self.validator = validator
 
         self.setFixedSize(self.geometry().width(), self.geometry().height())
         self.minimum_width = self.geometry().width()

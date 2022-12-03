@@ -9,7 +9,7 @@ from mvclib.hd import Xprv, derive_xkeys_from_xkey, Xpub
 from mvclib.service import MetaSV
 from mvclib.utils import decode_address
 
-from base import copy_to_clipboard, set_table_view, still_under_development, UnspentModel, FtModel, copy_table_selected, table_select_all
+from base import copy_to_clipboard, set_table_view, under_development, UnspentModel, FtModel, copy_table_selected, table_select_all
 from designer.wallet import Ui_formWallet
 from keys import KeysUi
 from metasv import ft_balance, TIMEOUT
@@ -236,7 +236,7 @@ class WalletUi(QWidget, Ui_formWallet):
         fts_selected = self.fts_selected()
         for ft in fts_selected:
             print(ft)
-        still_under_development(self)
+        under_development(self)
 
     def fts_selected(self) -> List[Dict]:
         fts: List[Dict] = []

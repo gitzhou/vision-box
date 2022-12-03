@@ -1,4 +1,3 @@
-import hashlib
 import json
 from contextlib import suppress
 from typing import Dict, List, Optional
@@ -6,14 +5,11 @@ from typing import Dict, List, Optional
 from mvclib import PublicKey
 from mvclib.aes import aes_encrypt_with_iv, aes_decrypt_with_iv
 from mvclib.constants import Chain
+from mvclib.hash import sha256
 from mvclib.hd import Xprv, Xpub
 from mvclib.utils import decode_wif, decode_address
 
 COIN_DECIMAL = 8
-
-
-def sha256(payload: bytes) -> bytes:
-    return hashlib.sha256(payload).digest()
 
 
 def encrypt_account(account: List[Dict], password: str) -> bytes:

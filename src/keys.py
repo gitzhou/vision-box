@@ -16,10 +16,10 @@ from utils import format_coin
 class XkeyModel(QtCore.QAbstractTableModel):
     def __init__(self, xkeys: Optional[List[Union[Xpub, Xprv]]] = None, unspents: Optional[List[Unspent]] = None, change: int = 0):
         super(XkeyModel, self).__init__()
-        self.change: int = change
         self.xkeys: List[Union[Xpub, Xprv]] = xkeys or []
-        self.unspents: List[Unspent] = []
         self._xkeys: List[str] = []
+        self.unspents: List[Unspent] = []
+        self.change: int = change
         self.update_fields(unspents)
         self.headers = ['路径', '公钥', '地址', 'UTXO', '余额']
 
@@ -70,7 +70,6 @@ class KeysUi(QWidget, Ui_widgetKeys):
         self.receive_xkeys: List[Union[Xpub, Xprv]] = derive_xkeys_from_xkey(self.xkey, 0, w['receive_limit'], 0)
         self.change_xkeys: List[Union[Xpub, Xprv]] = derive_xkeys_from_xkey(self.xkey, 0, w['change_limit'], 1)
         self.unspents: List[Unspent] = unspents or []
-        self.send_unspents_dialog = None
 
         self.receive_model = XkeyModel(self.receive_xkeys, self.unspents, 0)
         self.receive_proxy_model = QtCore.QSortFilterProxyModel()
@@ -94,7 +93,7 @@ class KeysUi(QWidget, Ui_widgetKeys):
         self.setWindowTitle(f'地址库：{w["name"]}')
         self.tabWidgetKeys.setCurrentIndex(0)
 
-        self.tableViewReceive.selectionModel().selectionChanged.connect(lambda: self.enable_receive_send_button())
+        self.tableViewReceive.selectionModel().selectionChanged.connect(lambda: self.pushButtonReceiveSend.setEnabled(len(self.unspents_selected(self.tableViewReceive)) > 0))
         self.tableViewReceive.selectionModel().selectionChanged.connect(lambda: KeysUi.enable_key_button(self.pushButtonReceiveKey, self.tableViewReceive))
         self.pushButtonReceiveSend.setEnabled(False)
         self.pushButtonReceiveSend.clicked.connect(lambda: self.send_button_clicked(self.tableViewReceive))
@@ -104,7 +103,7 @@ class KeysUi(QWidget, Ui_widgetKeys):
         self.pushButtonReceiveKey.setEnabled(False)
         self.pushButtonReceiveKey.clicked.connect(lambda: require_password(self, KeysUi.key_button_clicked, self.password, t=self.tableViewReceive, xkeys=self.receive_xkeys))
 
-        self.tableViewChange.selectionModel().selectionChanged.connect(lambda: self.enable_change_send_button())
+        self.tableViewChange.selectionModel().selectionChanged.connect(lambda: self.pushButtonChangeSend.setEnabled(len(self.unspents_selected(self.tableViewChange)) > 0))
         self.tableViewChange.selectionModel().selectionChanged.connect(lambda: KeysUi.enable_key_button(self.pushButtonChangeKey, self.tableViewChange))
         self.pushButtonChangeSend.setEnabled(False)
         self.pushButtonChangeSend.clicked.connect(lambda: self.send_button_clicked(self.tableViewChange))
@@ -119,12 +118,6 @@ class KeysUi(QWidget, Ui_widgetKeys):
             self.pushButtonReceiveKey.setVisible(False)
             self.pushButtonChangeSend.setVisible(False)
             self.pushButtonChangeKey.setVisible(False)
-
-    def enable_receive_send_button(self):
-        self.pushButtonReceiveSend.setEnabled(len(self.unspents_selected(self.tableViewReceive)) > 0)
-
-    def enable_change_send_button(self):
-        self.pushButtonChangeSend.setEnabled(len(self.unspents_selected(self.tableViewChange)) > 0)
 
     def update_fields(self, password: Optional[str] = None, w: Optional[Dict] = None, unspents: Optional[List[Unspent]] = None):
         if password is not None:
@@ -154,8 +147,8 @@ class KeysUi(QWidget, Ui_widgetKeys):
     def send_button_clicked(self, t: QTableView):
         selected_unspents = self.unspents_selected(t)
         change_address = random.choice(self.change_xkeys).address()
-        self.send_unspents_dialog = SendUnspentsUi(self.password, selected_unspents, self.chain, change_address, True)
-        if self.send_unspents_dialog.exec():
+        dialog = SendUnspentsUi(self.password, selected_unspents, self.chain, change_address, True)
+        if dialog.exec():
             t.clearSelection()
             self.request_refresh.emit()
 

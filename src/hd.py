@@ -11,15 +11,15 @@ from designer.hd import Ui_dialogHd
 from utils import xprv_valid as _xprv_valid, xpub_valid as _xpub_valid
 
 
-class Mode(str, Enum):
-    HD = 'hd'
-    Xprv = 'xprv'
-    Xpub = 'xpub'
-    Readonly = 'readonly'
+class Mode(int, Enum):
+    Readonly = 0
+    Mnemonic = 1
+    Xprv = 2
+    Xpub = 3
 
 
 class HdUi(QDialog, Ui_dialogHd):
-    mnemonic_path_passphrase_set = QtCore.pyqtSignal(object)
+    mnemonic_set = QtCore.pyqtSignal(object)
 
     def __init__(self, mnemonic: str = '', path: str = '', passphrase: str = '', xprv: str = '', xpub: str = '', chain: Chain = Chain.MAIN, mode: Mode = Mode.Readonly):
         super(HdUi, self).__init__()
@@ -45,11 +45,10 @@ class HdUi(QDialog, Ui_dialogHd):
         self.lineEditPath.textChanged.connect(self.derive_from_mnemonic)
         self.lineEditPassphrase.textChanged.connect(self.derive_from_mnemonic)
         self.plainTextEditXprv.textChanged.connect(self.derive_from_xprv)
-        self.pushButtonOk.setEnabled(False)
-        self.plainTextEditXpub.textChanged.connect(self.enable_ok_button)
+        self.plainTextEditXpub.textChanged.connect(lambda: self.pushButtonOk.setEnabled(self.xpub_valid()))
         self.pushButtonOk.clicked.connect(self.ok_button_clicked)
 
-        if mode == Mode.HD:
+        if mode == Mode.Mnemonic:
             self.plainTextEditMnemonic.setReadOnly(False)
             self.lineEditPath.setReadOnly(False)
             self.lineEditPassphrase.setReadOnly(False)
@@ -68,11 +67,6 @@ class HdUi(QDialog, Ui_dialogHd):
             if xprv:
                 self.derive_from_xprv()
 
-        self.enable_ok_button()
-
-    def enable_ok_button(self):
-        self.pushButtonOk.setEnabled(self.xpub_valid() or self.mnemonic_valid() and self.path_valid())
-
     def mnemonic_valid(self) -> bool:
         with suppress(Exception):
             validate_mnemonic(mnemonic=self.plainTextEditMnemonic.toPlainText().strip())
@@ -90,7 +84,7 @@ class HdUi(QDialog, Ui_dialogHd):
         return _xpub_valid(xpub=self.plainTextEditXpub.toPlainText().strip(), chain=self.chain)
 
     def ok_button_clicked(self):
-        self.mnemonic_path_passphrase_set.emit({
+        self.mnemonic_set.emit({
             'mnemonic': self.plainTextEditMnemonic.toPlainText().strip(),
             'path': self.lineEditPath.text(),
             'passphrase': self.lineEditPassphrase.text(),

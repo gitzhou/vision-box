@@ -22,8 +22,8 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
 
         self.password = password
         self.unspents: List[Unspent] = unspents or []
-        self.change_address = change_address
         self.chain: Chain = chain
+        self.change_address = change_address
         self.combine = combine
 
         self.receivers: List[Tuple[str, int]] = []
@@ -42,19 +42,18 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
         self.toolButtonMaxAmount.clicked.connect(self.max_amount_clicked)
         self.pushButtonSend.clicked.connect(lambda: require_password(self, self.send_transaction, self.password))
 
-    def filter_lines(self):
-        _lines = self.plainTextEditReceivers.toPlainText().splitlines()
+    def trim_blank_lines(self):
         lines = []
-        for _line in _lines:
-            if _line.strip():
-                lines.append(_line.strip())
+        for line in self.plainTextEditReceivers.toPlainText().splitlines():
+            if line.strip():
+                lines.append(line.strip())
         return lines
 
     regex_patter_receivers = r'^\s*(\S+)\s*[,，]\s*(\d+(\.\d{1,8})?)\s*$'
     regex_patter_amount = r'^\s*\d+(\.\d{1,8})?\s*$'
 
     def receivers_text_changed(self):
-        lines = self.filter_lines()
+        lines = self.trim_blank_lines()
         self.lineEditAmount.setReadOnly(len(lines) != 1)
         self.toolButtonMaxAmount.setEnabled(len(lines) == 1)
         receivers_valid = self.receivers_valid()
@@ -71,7 +70,7 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
         self.pushButtonSend.setEnabled(self.amount_valid() and self.receivers_valid())
 
     def receivers_valid(self) -> bool:
-        lines = self.filter_lines()
+        lines = self.trim_blank_lines()
         if len(lines) == 0:
             valid = False
         elif len(lines) == 1:
@@ -92,7 +91,7 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
         return valid
 
     def parse_receivers(self):
-        lines = self.filter_lines()
+        lines = self.trim_blank_lines()
         if len(lines) == 1:
             self.receivers = [(lines[0], int(Decimal(self.lineEditAmount.text()) * 10 ** COIN_DECIMAL))]
         else:

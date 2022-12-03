@@ -11,11 +11,20 @@ from base import require_password, activate, set_password
 from designer.startup import Ui_formStartup
 from utils import write_account_file, read_account_file
 
-welcome = """Vision Box
-
+welcome = """
 https://visionbox.space
 
+v0.2.0
+------
+
+- 支持修改账户密码
+- 支持钱包重命名和信息查看
+- 支持通过扩展私钥、私钥、扩展公钥、公钥和地址导入钱包，支持观察钱包
+- 支持查看钱包地址库里各地址的私钥
+- 解决已知问题，优化和代码重构
+
 v0.1.0
+------
 
 - 接入测试网
 - 导入或新建 HD 钱包，查看钱包地址库
@@ -34,12 +43,12 @@ class StartupUi(QWidget, Ui_formStartup):
         self.account_window = None
         self.app_settings = {}
 
-        self.setFixedSize(self.geometry().width(), self.geometry().height())
+        self.setFixedSize(600, 420)
+        self.setWindowTitle('Vision Box')
+        self.plainTextEditWelcome.setPlainText(welcome)
         self.pushButtonActivate.clicked.connect(lambda: activate(self.update_client_key))
         self.pushButtonNew.clicked.connect(self.new_account_button_clicked)
         self.pushButtonOpen.clicked.connect(self.open_account_button_clicked)
-
-        self.plainTextEditWelcome.setPlainText(welcome)
 
         self.read_settings_file()
 

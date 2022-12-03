@@ -12,28 +12,28 @@ from set_password import SetPasswordUi
 from utils import format_coin
 
 
-def require_password(parent: QWidget, callback: Callable, password: Optional[str] = None, **kwargs):
+def require_password(_parent: QWidget, _callback: Callable, _password: Optional[str] = None, **kwargs):
     dialog = InputDialogUi()
     dialog.setWindowTitle('密码')
     dialog.labelDescription.setText(f'账户文件已加密，输入正确的密码解锁。')
     dialog.lineEdit.setEchoMode(QLineEdit.EchoMode.Password)
     dialog.lineEdit.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[\x21-\x7E]*"), None))
-    dialog.text_entered.connect(lambda text: _require_password(parent, callback, text, password, **kwargs))
+    dialog.text_entered.connect(lambda text: _require_password(_parent, _callback, text, _password, **kwargs))
     dialog.exec()
 
 
-def _require_password(parent: QWidget, callback: Callable, text: str, password: Optional[str] = None, **kwargs):
-    if password is None:
-        callback(**{**kwargs, 'password': text})
-    elif text == password:
-        callback(**kwargs)
+def _require_password(_parent: QWidget, _callback: Callable, _text: str, _password: Optional[str] = None, **kwargs):
+    if _password is None:
+        _callback(**{**kwargs, 'password': _text})
+    elif _text == _password:
+        _callback(**kwargs)
     else:
-        QMessageBox.critical(parent, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
+        QMessageBox.critical(_parent, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
 
 
-def set_password(callback: Callable):
+def set_password(slot: Callable):
     dialog = SetPasswordUi()
-    dialog.password_set.connect(callback)
+    dialog.password_set.connect(slot)
     dialog.exec()
 
 
@@ -76,7 +76,7 @@ def set_table_view(t: QTableView):
     t.setSortingEnabled(True)
 
 
-def still_under_development(parent: QWidget):
+def under_development(parent: QWidget):
     QMessageBox.information(parent, '信息', '代码还在写。', QMessageBox.StandardButton.Ok)
 
 

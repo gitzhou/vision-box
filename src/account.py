@@ -58,7 +58,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.widget.setLayout(self.stacked_layout)
 
         self.actionActivate.triggered.connect(lambda: activate(self.update_client_key))
-        self.actionChangePassword.triggered.connect(lambda: require_password(self, self.action_change_password_clicked, self.password))
+        self.actionChangePassword.triggered.connect(lambda: require_password(self, set_password, self.password, slot=self.change_password))
         self.pushButtonNew.clicked.connect(lambda: require_password(self, self.new_wallet_clicked, self.password))
         self.pushButtonImport.clicked.connect(lambda: require_password(self, self.import_wallet_clicked, self.password))
 
@@ -70,19 +70,13 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
 
         for i in range(len(self.account)):
             self.add_wallet_widget(self.account[i], i)
+
         self.model = WalletModel(self.account)
         self.listViewWallets.setModel(self.model)
         self.listViewWallets.selectionModel().selectionChanged.connect(self.wallet_list_selection_changed)
         self.listViewWallets.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.listViewWallets.customContextMenuRequested.connect(self.wallet_list_context_menu)
-        # 默认选中第一个钱包
         self.select_wallet_in_list(0)
-
-    def network_status_updated(self, connectivity: bool):
-        texts = {True: '没问题', False: '拉胯了'}
-        colors = {True: 'color: green', False: 'color: red'}
-        self.network_status.setText(texts[connectivity])
-        self.network_status.setStyleSheet(colors[connectivity])
 
     def update_client_key(self, client_key: str):
         self.app_settings['client_key'] = client_key
@@ -90,9 +84,6 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         for i in range(self.stacked_layout.count()):
             w: WalletUi = self.stacked_layout.widget(i)
             w.update_fields(app_settings=self.app_settings)
-
-    def action_change_password_clicked(self):
-        set_password(self.change_password)
 
     def change_password(self, password: str):
         self.password = password
@@ -120,29 +111,29 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         if chain:
             dialog = HdUi(mnemonic=mnemonic_from_entropy(), path=BIP44_DERIVATION_PATH, chain=chain, mode=Mode.Readonly)
             dialog.setWindowTitle('立刻！马上！备份你的「助记词」「衍生路径」「助记词密码」')
-            dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
+            dialog.mnemonic_set.connect(self.add_hd)
             dialog.exec()
 
     def import_wallet_clicked(self):
         _hd, _ = '助记词', '其它（扩展私钥 / 私钥 / 扩展公钥 / 公钥 / 地址）'
-        selected, ok = QInputDialog.getItem(self, '钱包类型', '导入何种钱包？', [_hd, _], 0, False)
+        selected, ok = QInputDialog.getItem(self, '导入钱包', '选择导入钱包的方式。', [_hd, _], 0, False)
         if ok:
             if selected == _hd:
                 chain = select_chain(self)
                 if chain:
-                    dialog = HdUi(chain=chain, mode=Mode.HD)
+                    dialog = HdUi(chain=chain, mode=Mode.Mnemonic)
                     dialog.setWindowTitle('通过助记词导入钱包')
-                    dialog.mnemonic_path_passphrase_set.connect(self.add_hd)
+                    dialog.mnemonic_set.connect(self.add_hd)
                     dialog.exec()
             elif selected == _:
-                dialog = InputDialogUi(validator=AccountUi.wallet_import_input_valid)
+                dialog = InputDialogUi(validator=AccountUi.import_wallet_text_valid)
                 dialog.setWindowTitle('导入')
                 dialog.labelDescription.setText(f'通过其它方式导入钱包。')
                 dialog.text_entered.connect(self.import_wallet)
                 dialog.exec()
 
     @classmethod
-    def wallet_import_input_valid(cls, text) -> bool:
+    def import_wallet_text_valid(cls, text) -> bool:
         return xprv_valid(text) or xpub_valid(text) or wif_valid(text) or address_valid(text) or pk_valid(text)
 
     def import_wallet(self, text: str):
@@ -163,9 +154,9 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         hd.update({'name': f'HD 钱包 {len(self.account) + 1}', 'receive_index': 0, 'receive_limit': 150, 'change_limit': 50, })
         self.add_wallet(hd)
 
-    def add_key(self, single: Dict):
-        single.update({'name': f'钱包 {len(self.account) + 1}'})
-        self.add_wallet(single)
+    def add_key(self, key: Dict):
+        key.update({'name': f'钱包 {len(self.account) + 1}'})
+        self.add_wallet(key)
 
     def add_wallet(self, wallet: Dict):
         self.account.append(wallet)
@@ -190,6 +181,12 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
     def wallet_updated(self, wallet: Dict, account_index: int):
         self.account[account_index] = wallet
         write_account_file(self.account, self.account_file, self.password)
+
+    def network_status_updated(self, connectivity: bool):
+        texts = {True: '没问题', False: '拉胯了'}
+        colors = {True: 'color: green', False: 'color: red'}
+        self.network_status.setText(texts[connectivity])
+        self.network_status.setStyleSheet(colors[connectivity])
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         for i in range(self.stacked_layout.count()):
