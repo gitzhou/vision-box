@@ -9,10 +9,11 @@ from mvclib.hd import Xprv, derive_xkeys_from_xkey, Xpub
 from mvclib.service import MetaSV
 from mvclib.utils import decode_address
 
-from base import copy_to_clipboard, set_table_view, under_development, UnspentModel, FtModel, copy_table_selected, table_select_all
+from base import copy_to_clipboard, set_table_view, UnspentModel, FtModel, copy_table_selected, table_select_all
 from designer.wallet import Ui_formWallet
 from keys import KeysUi
 from metasv import ft_balance, TIMEOUT
+from send_ft import SendFtUi
 from send_unspents import SendUnspentsUi
 from utils import format_coin
 
@@ -211,8 +212,8 @@ class WalletUi(QWidget, Ui_formWallet):
             change_address = derive_xkeys_from_xkey(self.xkey, change_index, change_index + 1, 1)[0].address()
         else:
             change_address = self.address
-        send_unspents_dialog = SendUnspentsUi(self.password, unspents, self.chain, change_address, combine)
-        if send_unspents_dialog.exec():
+        dialog = SendUnspentsUi(self.password, unspents, self.chain, change_address, combine)
+        if dialog.exec():
             self.tableViewUnspent.clearSelection()
             self.refresh_button_clicked()
 
@@ -223,20 +224,20 @@ class WalletUi(QWidget, Ui_formWallet):
         return unspents
 
     def enable_ft_send_button(self):
-        self.pushButtonFtSend.setEnabled(len(self.fts_selected()) > 0)
+        self.pushButtonFtSend.setEnabled(len(self.fts_selected()) == 1)
 
     def refresh_ft_table(self, fts: Optional[List[Dict]]):
         if fts is not None:
             self.ft_model.update_fields(fts)
             self.tableViewFt.sortByColumn(0, QtCore.Qt.SortOrder.AscendingOrder)
-            self.toolBox.setItemText(self.toolBox.indexOf(self.pageFt), f'Token（{len(fts)}）' if fts else 'Token')
+            self.toolBox.setItemText(self.toolBox.indexOf(self.pageFt), f'Token（{self.ft_model.rowCount()}）' if self.ft_model.rowCount() else 'Token')
         self.network_status_updated.emit(fts is not None)
 
     def ft_send_button_clicked(self):
-        fts_selected = self.fts_selected()
-        for ft in fts_selected:
-            print(ft)
-        under_development(self)
+        dialog = SendFtUi(self.password, self.fts_selected()[0], self.key, self.unspent_model.unspents)
+        if dialog.exec():
+            self.tableViewFt.clearSelection()
+            self.refresh_button_clicked()
 
     def fts_selected(self) -> List[Dict]:
         fts: List[Dict] = []

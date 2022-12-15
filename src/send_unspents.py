@@ -5,14 +5,14 @@ from typing import List, Optional, Tuple
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtWidgets import QDialog, QAbstractItemView, QMessageBox
 from mvclib import Unspent, Transaction
-from mvclib.constants import Chain, P2PKH_DUST_LIMIT
+from mvclib.constants import Chain
 from mvclib.transaction import InsufficientFunds
 from mvclib.utils import validate_address
 from mvclib.wallet import create_transaction
 
 from base import set_table_view, UnspentModel, require_password
 from designer.send_unspents import Ui_dialogSendUnspents
-from utils import COIN_DECIMAL, format_coin
+from utils import COIN_DECIMAL, format_coin, splitlines_without_blank
 
 
 class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
@@ -25,15 +25,18 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
         self.chain: Chain = chain
         self.change_address = change_address
         self.combine = combine
-
         self.receivers: List[Tuple[str, int]] = []
+        self.regex_patter_receivers = f'^\\s*(\\S+)\\s*[,，]\\s*(\\d+(\\.\\d{{1,{COIN_DECIMAL}}})?)\\s*$'
+        self.regex_patter_amount = f'^\\s*\\d+(\\.\\d{{1,{COIN_DECIMAL}}})?\\s*$'
+
+        self.lineEditTotalInput.setText(format_coin(sum([unspent.satoshi for unspent in self.unspents])))
+        self.lineEditAmount.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression(self.regex_patter_amount), self))
 
         self.unspent_model = UnspentModel(self.unspents)
         self.tableViewUnspent.setModel(self.unspent_model)
         set_table_view(self.tableViewUnspent)
         self.tableViewUnspent.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
 
-        self.lineEditTotalInput.setText(format_coin(sum([unspent.satoshi for unspent in self.unspents])))
         self.lineEditAmount.setReadOnly(True)
         self.toolButtonMaxAmount.setEnabled(False)
         self.pushButtonSend.setEnabled(False)
@@ -42,63 +45,49 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
         self.toolButtonMaxAmount.clicked.connect(self.max_amount_clicked)
         self.pushButtonSend.clicked.connect(lambda: require_password(self, self.send_transaction, self.password))
 
-    def trim_blank_lines(self):
-        lines = []
-        for line in self.plainTextEditReceivers.toPlainText().splitlines():
-            if line.strip():
-                lines.append(line.strip())
-        return lines
-
-    regex_patter_receivers = r'^\s*(\S+)\s*[,，]\s*(\d+(\.\d{1,8})?)\s*$'
-    regex_patter_amount = r'^\s*\d+(\.\d{1,8})?\s*$'
-
+    # noinspection DuplicatedCode
     def receivers_text_changed(self):
-        lines = self.trim_blank_lines()
-        self.lineEditAmount.setReadOnly(len(lines) != 1)
-        self.toolButtonMaxAmount.setEnabled(len(lines) == 1)
+        lines = splitlines_without_blank(self.plainTextEditReceivers.toPlainText())
         receivers_valid = self.receivers_valid()
         self.pushButtonSend.setEnabled(self.amount_valid() and receivers_valid)
-        if len(lines) > 1:
-            if receivers_valid:
-                groups = re.findall(SendUnspentsUi.regex_patter_receivers, '\n'.join(lines), re.MULTILINE)
-                total_amount = sum([Decimal(amount) for amount in [group[1] for group in groups]])
-                self.lineEditAmount.setText(str(total_amount))
-            else:
-                self.lineEditAmount.setText('')
+        total_amount = ''
+        if receivers_valid:
+            groups = re.findall(self.regex_patter_receivers, '\n'.join(lines), re.MULTILINE)
+            _total_amount = sum([Decimal(amount) for amount in [group[1] for group in groups]])
+            if _total_amount:
+                total_amount = str(_total_amount)
+        self.lineEditAmount.setText(total_amount)
+        self.lineEditAmount.setReadOnly(len(lines) > 1 or total_amount != '')
+        self.toolButtonMaxAmount.setEnabled(len(lines) == 1 and total_amount == '')
 
     def amount_text_changed(self):
         self.pushButtonSend.setEnabled(self.amount_valid() and self.receivers_valid())
 
     def receivers_valid(self) -> bool:
-        lines = self.trim_blank_lines()
+        lines = splitlines_without_blank(self.plainTextEditReceivers.toPlainText())
         if len(lines) == 0:
             valid = False
-        elif len(lines) == 1:
-            valid = validate_address(lines[0], self.chain)
         else:
-            groups = re.findall(SendUnspentsUi.regex_patter_receivers, '\n'.join(lines), re.MULTILINE)
-            valid = len(groups) == len(lines) and all([validate_address(address, self.chain) for address in [group[0] for group in groups]])
+            groups = re.findall(self.regex_patter_receivers, '\n'.join(lines), re.MULTILINE)
+            address_all_valid = all([validate_address(address, self.chain) for address in [group[0] for group in groups]])
+            amount_all_valid = all([int(Decimal(amount) * 10 ** COIN_DECIMAL) > 0 for amount in [group[1] for group in groups]])
+            valid = len(groups) == len(lines) and address_all_valid and amount_all_valid
+        if not valid and len(lines) == 1:
+            valid = validate_address(lines[0], self.chain)
         return valid
 
     def amount_valid(self) -> bool:
         text = self.lineEditAmount.text()
-        if not text:
-            valid = False
-        else:
-            match_groups = re.match(SendUnspentsUi.regex_patter_amount, text)
-            amount = Decimal(text) * 10 ** COIN_DECIMAL if match_groups else -1
-            valid = amount >= P2PKH_DUST_LIMIT
-        return valid
+        return Decimal(text) * 10 ** COIN_DECIMAL if text else False
 
     def parse_receivers(self):
-        lines = self.trim_blank_lines()
-        if len(lines) == 1:
+        lines = splitlines_without_blank(self.plainTextEditReceivers.toPlainText())
+        self.receivers = []
+        groups = re.findall(self.regex_patter_receivers, '\n'.join(lines), re.MULTILINE)
+        for group in groups:
+            self.receivers.append((group[0], int(Decimal(group[1]) * 10 ** COIN_DECIMAL)))
+        if not self.receivers and len(lines) == 1:
             self.receivers = [(lines[0], int(Decimal(self.lineEditAmount.text()) * 10 ** COIN_DECIMAL))]
-        else:
-            self.receivers = []
-            groups = re.findall(SendUnspentsUi.regex_patter_receivers, '\n'.join(lines), re.MULTILINE)
-            for group in groups:
-                self.receivers.append((group[0], int(Decimal(group[1]) * 10 ** COIN_DECIMAL)))
 
     def send_transaction(self):
         self.parse_receivers()

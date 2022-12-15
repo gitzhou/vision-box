@@ -89,3 +89,11 @@ def pk_valid(pk: str) -> bool:
         PublicKey(pk)
         return True
     return False
+
+
+def splitlines_without_blank(text: str) -> List[str]:
+    lines = []
+    for line in text.splitlines():
+        if line.strip():
+            lines.append(line.strip())
+    return lines

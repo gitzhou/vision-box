@@ -76,10 +76,6 @@ def set_table_view(t: QTableView):
     t.setSortingEnabled(True)
 
 
-def under_development(parent: QWidget):
-    QMessageBox.information(parent, '信息', '代码还在写。', QMessageBox.StandardButton.Ok)
-
-
 class UnspentModel(QtCore.QAbstractTableModel):
     def __init__(self, unspents: Optional[List[Unspent]] = None):
         super(UnspentModel, self).__init__()
@@ -134,8 +130,9 @@ class FtModel(QtCore.QAbstractTableModel):
         for i in range(len(self.fts)):
             ft = fts[i]
             token_id = f'{ft["codeHash"]}/{ft["genesis"]}'
-            amount = format_coin(int(ft['confirmedString']) + int(ft['unconfirmedString']), ft['decimal'])
-            self._fts.append((ft['symbol'], ft['name'], token_id, str(ft['utxoCount']), amount))
+            amount = int(ft['confirmedString']) + int(ft['unconfirmedString'])
+            if amount > 0:
+                self._fts.append((ft['symbol'], ft['name'], token_id, str(ft['utxoCount']), format_coin(amount, ft['decimal'])))
         # noinspection PyUnresolvedReferences
         self.layoutChanged.emit()
 

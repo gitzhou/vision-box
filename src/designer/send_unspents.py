@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_dialogSendUnspents(object):
     def setupUi(self, dialogSendUnspents):
         dialogSendUnspents.setObjectName("dialogSendUnspents")
-        dialogSendUnspents.resize(1100, 528)
+        dialogSendUnspents.resize(1100, 530)
         self.gridLayout = QtWidgets.QGridLayout(dialogSendUnspents)
         self.gridLayout.setObjectName("gridLayout")
         self.formLayout = QtWidgets.QFormLayout()
@@ -94,7 +94,7 @@ class Ui_dialogSendUnspents(object):
 
     def retranslateUi(self, dialogSendUnspents):
         _translate = QtCore.QCoreApplication.translate
-        dialogSendUnspents.setWindowTitle(_translate("dialogSendUnspents", "发送"))
+        dialogSendUnspents.setWindowTitle(_translate("dialogSendUnspents", "发送 SPACE"))
         self.labelUnspent.setText(_translate("dialogSendUnspents", "选择的 UTXO"))
         self.labelTotalInput.setText(_translate("dialogSendUnspents", "输入总数"))
         self.labelUnspentSymbol_2.setText(_translate("dialogSendUnspents", "SPACE"))

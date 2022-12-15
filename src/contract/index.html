@@ -1,0 +1,17 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <script src="local-file://meta-contract.browser.min.js"></script>
+    <script src="local-file://qwebchannel.js"></script>
+    <script>
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+                window.Bridge = channel.objects.Bridge;
+            }
+        );
+    </script>
+    <title></title>
+</head>
+<body>
+<script src="local-file://meta-contract.js"></script>
+</body>
+</html>
