@@ -1,6 +1,8 @@
 import json
 import mimetypes
+import os
 import re
+import sys
 import uuid
 from typing import Callable, Any
 from typing import List, Dict
@@ -12,6 +14,8 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from mvclib import Key
 from mvclib.constants import Chain
 
+basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
+
 
 class UrlSchemeHandler(QWebEngineUrlSchemeHandler):
 
@@ -21,7 +25,7 @@ class UrlSchemeHandler(QWebEngineUrlSchemeHandler):
         if match_groups:
             filename = match_groups.group(2)
             ext = match_groups.group(3)
-            file = QFile(f'contract/{filename}', job)
+            file = QFile(os.path.join(basedir, f'contract/{filename}'), job)
             file.open(QIODevice.OpenModeFlag.ReadOnly)
             job.reply(mimetypes.types_map[ext].encode('utf-8'), file)
 
@@ -37,7 +41,7 @@ class ContractWebEngineView(QWebEngineView):
         QWebEngineUrlScheme.registerScheme(QWebEngineUrlScheme(scheme))
         profile = QWebEngineProfile.defaultProfile()
         profile.installUrlSchemeHandler(scheme, UrlSchemeHandler(self))
-        self.setHtml(open('contract/index.html', 'r', encoding='utf-8').read())
+        self.setHtml(open(os.path.join(basedir, 'contract/index.html'), 'r', encoding='utf-8').read())
 
         channel = QWebChannel(self)
         channel.registerObject('Bridge', self)
