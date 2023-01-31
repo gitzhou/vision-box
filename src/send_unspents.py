@@ -95,16 +95,16 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
             t = create_transaction(unspents=self.unspents, outputs=self.receivers, leftover=self.change_address, combine=self.combine, chain=self.chain)
             r = t.broadcast()
             if r.propagated:
-                QMessageBox.information(self, '信息', f'发送成功。\n\n{r.data}', QMessageBox.StandardButton.Ok)
+                QMessageBox.information(self, 'Information', f'Sent successfully.\n\n{r.data}', QMessageBox.StandardButton.Ok)
                 self.accept()
             else:
-                QMessageBox.critical(self, '错误', f'发送失败。\n\n{r.data}\n\n{t.hex()}', QMessageBox.StandardButton.Ok)
+                QMessageBox.critical(self, 'Critical', f'Failed to send.\n\n{r.data}\n\n{t.hex()}', QMessageBox.StandardButton.Ok)
         except InsufficientFunds as e:
             _groups = re.findall(r'require (\d+) satoshi but only (\d+)', str(e))
-            _message = f'输入数量不足。\n\n共需要 {format_coin(_groups[0][0])} SPACE，\n但只有 {format_coin(_groups[0][1])} SPACE。'
-            QMessageBox.critical(self, '错误', _message, QMessageBox.StandardButton.Ok)
+            _message = f'Insufficient SPACE.\n\nRequires {format_coin(_groups[0][0])} in total, but only has {format_coin(_groups[0][1])}.'
+            QMessageBox.critical(self, 'Critical', _message, QMessageBox.StandardButton.Ok)
         except Exception as e:
-            QMessageBox.critical(self, '错误', f'未知错误。\n\n{e}', QMessageBox.StandardButton.Ok)
+            QMessageBox.critical(self, 'Critical', f'Unknown exception.\n\n{e}', QMessageBox.StandardButton.Ok)
 
     def max_amount_clicked(self):
         t = Transaction(chain=self.chain).add_inputs(self.unspents).add_change()

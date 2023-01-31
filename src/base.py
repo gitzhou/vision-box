@@ -14,8 +14,8 @@ from utils import format_coin
 
 def require_password(_parent: QWidget, _callback: Callable, _password: Optional[str] = None, **kwargs):
     dialog = InputDialogUi()
-    dialog.setWindowTitle('密码')
-    dialog.labelDescription.setText(f'账户文件已加密，输入正确的密码解锁。')
+    dialog.setWindowTitle('Password')
+    dialog.labelDescription.setText('The account file is encrypted, enter the correct password to unlock it.')
     dialog.lineEdit.setEchoMode(QLineEdit.EchoMode.Password)
     dialog.lineEdit.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression("[\x21-\x7E]*"), None))
     dialog.text_entered.connect(lambda text: _require_password(_parent, _callback, text, _password, **kwargs))
@@ -28,7 +28,7 @@ def _require_password(_parent: QWidget, _callback: Callable, _text: str, _passwo
     elif _text == _password:
         _callback(**kwargs)
     else:
-        QMessageBox.critical(_parent, '错误', '没有输入正确的账户密码。', QMessageBox.StandardButton.Ok)
+        QMessageBox.critical(_parent, 'Critical', 'The account password you entered is not correct.', QMessageBox.StandardButton.Ok)
 
 
 def set_password(slot: Callable):
@@ -39,16 +39,16 @@ def set_password(slot: Callable):
 
 def activate(slot: Callable):
     dialog = InputDialogUi()
-    dialog.setWindowTitle('激活')
-    dialog.labelDescription.setText(f'输入客户端密钥。')
+    dialog.setWindowTitle('Activate')
+    dialog.labelDescription.setText('Enter a client secret to activate this application.')
     dialog.text_entered.connect(slot)
     dialog.exec()
 
 
 def select_chain(parent: QWidget) -> Optional[Chain]:
-    main_network = '主网'
-    test_network = '测试网'
-    selected, ok = QInputDialog.getItem(parent, "网络", "选择网络。", [main_network, test_network], 0, False)
+    main_network = 'Mainnet'
+    test_network = 'Testnet'
+    selected, ok = QInputDialog.getItem(parent, "Network", "Select a network.", [main_network, test_network], 0, False)
     if ok:
         return Chain.TEST if selected == test_network else Chain.MAIN
     return None
@@ -83,7 +83,7 @@ class UnspentModel(QtCore.QAbstractTableModel):
         self.unspents: List[Unspent] = []
         self._unspents: List[str] = []
         self.update_fields(unspents)
-        self.headers = ['高度', '输出', '地址', '数量']
+        self.headers = ['Height', 'Outpoint', 'Address', 'Amount']
 
     def update_fields(self, unspents: Optional[List[Unspent]] = None):
         self.unspents = unspents or []
@@ -123,7 +123,7 @@ class FtModel(QtCore.QAbstractTableModel):
         self.fts: List[Dict] = []
         self._fts: List[str] = []
         self.update_fields(fts)
-        self.headers = ['符号', '名称', '标识', 'UTXO', '数量']
+        self.headers = ['Symbol', 'Name', 'identifier', 'UTXO', 'Amount']
 
     def update_fields(self, fts: Optional[List[Dict]] = None):
         self.fts = fts or []

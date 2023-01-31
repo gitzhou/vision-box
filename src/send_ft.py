@@ -27,9 +27,9 @@ class SendFtUi(QDialog, Ui_dialogSendFt):
         self.receivers: List[Dict] = []
         self.regex_patter_receivers = f'^\\s*(\\S+)\\s*[,，]\\s*(\\d+(\\.\\d{{1,{self.ft["decimal"]}}})?)\\s*$'
         self.regex_patter_amount = f'^\\s*\\d+(\\.\\d{{1,{self.ft["decimal"]}}})?\\s*$'
-        self.loading = LoadingUi(f'正在发送 {self.ft["name"]} ({self.ft["symbol"]}) ...')
+        self.loading = LoadingUi(f'Sending {self.ft["name"]} ({self.ft["symbol"]}) ...')
 
-        self.setWindowTitle(f'发送 {self.ft["name"]} ({self.ft["symbol"]})')
+        self.setWindowTitle(f'Send / {self.ft["name"]} ({self.ft["symbol"]})')
         self.labelFtSymbol.setText(self.ft['symbol'])
         self.lineEditAmount.setValidator(QtGui.QRegularExpressionValidator(QtCore.QRegularExpression(self.regex_patter_amount), self))
 
@@ -90,7 +90,7 @@ class SendFtUi(QDialog, Ui_dialogSendFt):
         try:
             # 合并 Gas
             if not self.unspents:
-                QMessageBox.information(self, '信息', f'没有 SPACE 可用，无法发送 {self.ft["symbol"]}。', QMessageBox.StandardButton.Ok)
+                QMessageBox.information(self, 'Information', f'Cannot send {self.ft["symbol"]} without SPACE available.', QMessageBox.StandardButton.Ok)
                 return
             if len([self.key.address() == unspent.address for unspent in self.unspents]) > 3:
                 Transaction(chain=self.key.chain).add_inputs(self.unspents).add_change(self.key.address()).sign().broadcast()
@@ -98,20 +98,20 @@ class SendFtUi(QDialog, Ui_dialogSendFt):
             self.contract.ft_transfer(self.ft, self.key, self.receivers, self.send_ft_callback)
             self.loading.exec()
         except Exception as e:
-            QMessageBox.critical(self, '错误', f'未知错误。\n\n{e}', QMessageBox.StandardButton.Ok)
+            QMessageBox.critical(self, 'Critical', f'Unknown exception.\n\n{e}', QMessageBox.StandardButton.Ok)
 
     def send_ft_callback(self, r: Dict):
         self.loading.accept()
         if r['code'] == 0:
-            QMessageBox.information(self, '信息', f'发送成功。\n\n{r["txid"]}', QMessageBox.StandardButton.Ok)
+            QMessageBox.information(self, 'Information', f'Sent successfully.\n\n{r["txid"]}', QMessageBox.StandardButton.Ok)
             self.accept()
         else:
             message = r['message']
             if r['code'] == -200:
-                message = 'SPACE 余额不足'
+                message = 'Insufficient SPACE'
             elif r['code'] == -201:
-                message = f'{self.ft["symbol"]} 余额不足'
-            QMessageBox.critical(self, '错误', f'发送失败。\n\n{message}', QMessageBox.StandardButton.Ok)
+                message = f'Insufficient {self.ft["symbol"]}'
+            QMessageBox.critical(self, 'Critical', f'Failed to send.\n\n{message}', QMessageBox.StandardButton.Ok)
 
     def max_amount_clicked(self):
         self.lineEditAmount.setText(format_coin(int(self.ft['confirmedString']) + int(self.ft['unconfirmedString']), self.ft['decimal']))

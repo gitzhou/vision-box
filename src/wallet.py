@@ -118,8 +118,8 @@ class WalletUi(QWidget, Ui_formWallet):
         self.labelUnspentAddress.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
         self.labelFtAddress.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
 
-        watch_only_hint = '（观察钱包）' if self.key is None else ''
-        chain_hint = '（测试网）' if self.chain == Chain.TEST else '（主网）'
+        watch_only_hint = ' (Watching-Only) ' if self.key is None else ''
+        chain_hint = ' (Testnet) ' if self.chain == Chain.TEST else ' (Mainnet) '
         self.labelHint.setText(chain_hint + watch_only_hint)
         self.labelUnspentAddress.setText(unspent_address)
         self.labelFtAddress.setText(self.address)

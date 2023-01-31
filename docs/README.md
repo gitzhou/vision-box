@@ -1,21 +1,22 @@
-[MVC](https://mvc.space) 桌面钱包
+[MVC](https://www.microvisionchain.com/) Desktop Wallet.
 
-- 非托管（non-custodial）
-- HD（Hierarchical Deterministic）
+- Non-custodial
+- HD (Hierarchical Deterministic) support
 
-[下载最新版](https://github.com/gitzhou/vision-box/releases/latest)
+[Download](https://github.com/gitzhou/vision-box/releases/latest)
 
 ## v0.2.0
 
-- 支持修改账户密码
-- 支持钱包重命名和信息查看
-- 支持通过扩展私钥、私钥、扩展公钥、公钥和地址导入钱包，支持观察钱包
-- 支持查看钱包地址库里各地址的私钥
-- 解决已知问题，优化和代码重构
+- Support changing the account password
+- Support wallet renaming and information viewing
+- Support for importing wallets through other ways
+- Support for watching-only wallets
+- Support viewing the private key of each address in the wallet keys
+- Fix known issues, optimization, and code refactoring
 
 ## v0.1.0
 
-- 接入测试网
-- 导入或新建 HD 钱包，查看钱包地址库
-- 收发 SPACE，支持从列表或地址库选择 UTXO，支持一转多
-- 仅支持接收 FT
+- Access to Testnet
+- Import or create a new HD wallet, and view keys in the wallet
+- Send and receive SPACE, support selecting UTXO and pay-to-many
+- only supports receive FT

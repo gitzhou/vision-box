@@ -21,7 +21,7 @@ class XkeyModel(QtCore.QAbstractTableModel):
         self.unspents: List[Unspent] = []
         self.change: int = change
         self.update_fields(unspents)
-        self.headers = ['路径', '公钥', '地址', 'UTXO', '余额']
+        self.headers = ['Path', 'Public Key', 'Address', 'UTXO', 'Balance']
 
     def update_fields(self, unspents: Optional[List[Unspent]] = None):
         self.unspents = unspents or []
@@ -90,7 +90,7 @@ class KeysUi(QWidget, Ui_widgetKeys):
         self.lineEditReceiveSearch.textChanged.connect(self.receive_proxy_model.setFilterFixedString)
         self.lineEditChangeSearch.textChanged.connect(self.change_proxy_model.setFilterFixedString)
 
-        self.setWindowTitle(f'地址库：{w["name"]}')
+        self.setWindowTitle(f'Keys / {w["name"]}')
         self.tabWidgetKeys.setCurrentIndex(0)
 
         self.tableViewReceive.selectionModel().selectionChanged.connect(lambda: self.pushButtonReceiveSend.setEnabled(len(self.unspents_selected(self.tableViewReceive)) > 0))
@@ -123,7 +123,7 @@ class KeysUi(QWidget, Ui_widgetKeys):
         if password is not None:
             self.password = password
         if w is not None:
-            self.setWindowTitle(f'地址库：{w["name"]}')
+            self.setWindowTitle(f'Keys / {w["name"]}')
         if unspents is not None:
             self.unspents = unspents
             self.receive_proxy_model.beginResetModel()

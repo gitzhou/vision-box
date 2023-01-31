@@ -17,19 +17,20 @@ https://visionbox.space
 v0.2.0
 ------
 
-- 支持修改账户密码
-- 支持钱包重命名和信息查看
-- 支持通过扩展私钥、私钥、扩展公钥、公钥和地址导入钱包，支持观察钱包
-- 支持查看钱包地址库里各地址的私钥
-- 解决已知问题，优化和代码重构
+- Support changing the account password
+- Support wallet renaming and information viewing
+- Support for importing wallets through other ways
+- Support for watching-only wallets
+- Support viewing the private key of each address in the wallet keys
+- Fix known issues, optimization, and code refactoring
 
 v0.1.0
 ------
 
-- 接入测试网
-- 导入或新建 HD 钱包，查看钱包地址库
-- 收发 SPACE，支持从列表或地址库选择 UTXO，支持一转多
-- 仅支持接收 FT"""
+- Access to Testnet
+- Import or create a new HD wallet, and view keys in the wallet
+- Send and receive SPACE, support selecting UTXO and pay-to-many
+- only supports receive FT"""
 
 
 class StartupUi(QWidget, Ui_formStartup):
@@ -43,7 +44,7 @@ class StartupUi(QWidget, Ui_formStartup):
         self.account_window = None
         self.app_settings = {}
 
-        self.setFixedSize(600, 420)
+        self.setFixedSize(600, 450)
         self.setWindowTitle('Vision Box')
         self.plainTextEditWelcome.setPlainText(welcome)
         self.pushButtonActivate.clicked.connect(lambda: activate(self.update_client_key))
@@ -53,13 +54,13 @@ class StartupUi(QWidget, Ui_formStartup):
         self.read_settings_file()
 
     def new_account_button_clicked(self):
-        r = QFileDialog.getSaveFileName(parent=self, caption='新建账户', directory=str(Path.home()), filter='账户文件 (*.account)')
+        r = QFileDialog.getSaveFileName(parent=self, caption='Create Account', directory=str(Path.home()), filter='Account file (*.account)')
         self.account_file = r[0]
         if self.account_file:
             set_password(self.new_account_file)
 
     def open_account_button_clicked(self):
-        r = QFileDialog.getOpenFileName(parent=self, caption='打开账户', directory=str(Path.home()), filter='账户文件 (*.account)')
+        r = QFileDialog.getOpenFileName(parent=self, caption='Open Account', directory=str(Path.home()), filter='Account file (*.account)')
         self.account_file = r[0]
         if self.account_file:
             require_password(self, self.open_account_file)
@@ -70,13 +71,14 @@ class StartupUi(QWidget, Ui_formStartup):
             write_account_file(account, self.account_file, password)
             self.show_account_window(account, password)
         except Exception as e:
-            QMessageBox.critical(self, '错误', f'账户“{Path(self.account_file).stem}”创建出错。\n\n{e}', QMessageBox.StandardButton.Ok)
+            QMessageBox.critical(self, 'Critical', f'Error creating account "{Path(self.account_file).stem}".\n\n{e}', QMessageBox.StandardButton.Ok)
 
     def open_account_file(self, password: str):
         try:
             self.show_account_window(read_account_file(self.account_file, password), password)
         except Exception as e:
-            QMessageBox.critical(self, '错误', f'账户“{Path(self.account_file).stem}”无法解锁，密码错误或文件损坏。\n\n{e}', QMessageBox.StandardButton.Ok)
+            message = f'The account "{Path(self.account_file).stem}" cannot be unlocked, the password is wrong or the file is damaged.\n\n{e}'
+            QMessageBox.critical(self, 'Critical', message, QMessageBox.StandardButton.Ok)
 
     def show_account_window(self, account: List[Dict], password: str):
         self.account_window = AccountUi(self.app_settings, account, self.account_file, password)

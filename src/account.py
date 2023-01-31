@@ -52,7 +52,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.account_file = account_file
         self.password = password
 
-        self.setWindowTitle(f'账户：{Path(self.account_file).stem}')
+        self.setWindowTitle(f'Account / {Path(self.account_file).stem}')
         self.setWindowState(QtCore.Qt.WindowState.WindowMaximized)
         self.stacked_layout = QStackedLayout()
         self.widget.setLayout(self.stacked_layout)
@@ -63,7 +63,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.pushButtonImport.clicked.connect(lambda: require_password(self, self.import_wallet_clicked, self.password))
 
         network = QLabel()
-        network.setText('网络连接：')
+        network.setText('Network : ')
         self.statusbar.addWidget(network)
         self.network_status = QLabel()
         self.statusbar.addWidget(self.network_status)
@@ -91,7 +91,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         for i in range(self.stacked_layout.count()):
             w: WalletUi = self.stacked_layout.widget(i)
             w.update_fields(password=self.password)
-        QMessageBox.information(self, '信息', '密码修改成功。', QMessageBox.StandardButton.Ok)
+        QMessageBox.information(self, 'Information', 'The password was changed successfully.', QMessageBox.StandardButton.Ok)
 
     def wallet_list_selection_changed(self, selected: QtCore.QItemSelection, last_selected: QtCore.QItemSelection):
         row = selected.indexes()[0].row() if selected.indexes() else last_selected.indexes()[0].row()
@@ -110,25 +110,25 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         chain = select_chain(self)
         if chain:
             dialog = HdUi(mnemonic=mnemonic_from_entropy(), path=BIP44_DERIVATION_PATH, chain=chain, mode=Mode.Readonly)
-            dialog.setWindowTitle('立刻！马上！备份你的「助记词」「衍生路径」「助记词密码」')
+            dialog.setWindowTitle('IMMEDIATELY ! BACK UP your "mnemonic", "path" and "passphrase" !')
             dialog.mnemonic_set.connect(self.add_hd)
             dialog.exec()
 
     def import_wallet_clicked(self):
-        _hd, _ = '助记词', '其它（扩展私钥 / 私钥 / 扩展公钥 / 公钥 / 地址）'
-        selected, ok = QInputDialog.getItem(self, '导入钱包', '选择导入钱包的方式。', [_hd, _], 0, False)
+        _hd, _others = 'Mnemonic', 'Others (Xprv / Private Key (WIF) / Xpub / Public Key / Address)'
+        selected, ok = QInputDialog.getItem(self, 'Import Wallet', 'Select the way to import the wallet.', [_hd, _others], 0, False)
         if ok:
             if selected == _hd:
                 chain = select_chain(self)
                 if chain:
                     dialog = HdUi(chain=chain, mode=Mode.Mnemonic)
-                    dialog.setWindowTitle('通过助记词导入钱包')
+                    dialog.setWindowTitle('Import Wallet by Mnemonic')
                     dialog.mnemonic_set.connect(self.add_hd)
                     dialog.exec()
-            elif selected == _:
+            elif selected == _others:
                 dialog = InputDialogUi(validator=AccountUi.import_wallet_text_valid)
-                dialog.setWindowTitle('导入')
-                dialog.labelDescription.setText(f'通过其它方式导入钱包。')
+                dialog.setWindowTitle('Import')
+                dialog.labelDescription.setText(f'Import the wallet in other ways.')
                 dialog.text_entered.connect(self.import_wallet)
                 dialog.exec()
 
@@ -151,11 +151,11 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
             self.add_key({'address': text})
 
     def add_hd(self, hd: Dict):
-        hd.update({'name': f'HD 钱包 {len(self.account) + 1}', 'receive_index': 0, 'receive_limit': 150, 'change_limit': 50, })
+        hd.update({'name': f'HD Wallet {len(self.account) + 1}', 'receive_index': 0, 'receive_limit': 150, 'change_limit': 50, })
         self.add_wallet(hd)
 
     def add_key(self, key: Dict):
-        key.update({'name': f'钱包 {len(self.account) + 1}'})
+        key.update({'name': f'Wallet {len(self.account) + 1}'})
         self.add_wallet(key)
 
     def add_wallet(self, wallet: Dict):
@@ -183,7 +183,7 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         write_account_file(self.account, self.account_file, self.password)
 
     def network_status_updated(self, connectivity: bool):
-        texts = {True: '没问题', False: '拉胯了'}
+        texts = {True: 'All Good', False: 'Broke Down'}
         colors = {True: 'color: green', False: 'color: red'}
         self.network_status.setText(texts[connectivity])
         self.network_status.setStyleSheet(colors[connectivity])
@@ -195,8 +195,8 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
 
     def wallet_list_context_menu(self, pos):
         menu = QMenu()
-        action_rename = menu.addAction('重命名')
-        action_information = menu.addAction('信息')
+        action_rename = menu.addAction('Rename')
+        action_information = menu.addAction('Information')
         action = menu.exec(self.listViewWallets.mapToGlobal(pos))
         if action == action_rename:
             self.context_menu_action_rename_clicked()
@@ -205,8 +205,8 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
 
     def context_menu_action_rename_clicked(self):
         dialog = InputDialogUi()
-        dialog.setWindowTitle('重命名')
-        dialog.labelDescription.setText(f'输入新的钱包名称。')
+        dialog.setWindowTitle('Rename')
+        dialog.labelDescription.setText('Enter a new wallet name.')
         dialog.lineEdit.setText(self.account[self.listViewWallets.selectedIndexes()[0].row()]['name'])
         dialog.text_entered.connect(self.rename_wallet)
         dialog.exec()
@@ -234,5 +234,5 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
             dialog = KeyUi(pk=w['pk'], address=w['address'])
         else:
             dialog = KeyUi(address=w['address'])
-        dialog.setWindowTitle(f'钱包：{w["name"]}')
+        dialog.setWindowTitle(f'Wallet / {w["name"]}')
         dialog.exec()
