@@ -98,12 +98,12 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.select_wallet_in_list(row)
 
     def select_wallet_in_list(self, index: int):
-        """选中钱包列表中的某项"""
+        """Select an item in the wallet list"""
         if self.model.rowCount():
             index %= self.model.rowCount()
-            # 列表选中
+            # Update list selection
             self.listViewWallets.setCurrentIndex(self.model.index(index))
-            # 显示对应的控件
+            # Display the corresponding widget
             self.stacked_layout.setCurrentIndex(index)
 
     def new_wallet_clicked(self):
@@ -166,13 +166,13 @@ class AccountUi(QMainWindow, Ui_mainWindowAccount):
         self.select_wallet_in_list(-1)
 
     def refresh_wallet_list(self):
-        """刷新左侧的钱包列表"""
+        """Refresh the wallet list on the left side"""
         self.model.update_fields(self.account)
         # noinspection PyUnresolvedReferences
         self.model.layoutChanged.emit()
 
     def add_wallet_widget(self, wallet: Dict, account_index: int):
-        """在右侧新增控件"""
+        """Add a wallet widget on the right side"""
         w = WalletUi(self.app_settings, self.password, wallet, account_index)
         w.wallet_updated.connect(self.wallet_updated)
         w.network_status_updated.connect(self.network_status_updated)

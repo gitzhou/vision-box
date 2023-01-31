@@ -88,13 +88,13 @@ class SendFtUi(QDialog, Ui_dialogSendFt):
     def send_ft(self):
         self.parse_receivers()
         try:
-            # 合并 Gas
+            # merge gas
             if not self.unspents:
                 QMessageBox.information(self, 'Information', f'Cannot send {self.ft["symbol"]} without SPACE available.', QMessageBox.StandardButton.Ok)
                 return
             if len([self.key.address() == unspent.address for unspent in self.unspents]) > 3:
                 Transaction(chain=self.key.chain).add_inputs(self.unspents).add_change(self.key.address()).sign().broadcast()
-            # 发送 FT
+            # send FT
             self.contract.ft_transfer(self.ft, self.key, self.receivers, self.send_ft_callback)
             self.loading.exec()
         except Exception as e:
