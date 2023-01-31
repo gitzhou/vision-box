@@ -132,8 +132,7 @@ class FtModel(QtCore.QAbstractTableModel):
             ft = fts[i]
             token_id = f'{ft["codeHash"]}/{ft["genesis"]}'
             amount = int(ft['confirmedString']) + int(ft['unconfirmedString'])
-            if amount > 0:
-                self._fts.append((ft['symbol'], ft['name'], token_id, str(ft['utxoCount']), format_coin(amount, ft['decimal'])))
+            self._fts.append((ft['symbol'], ft['name'], token_id, str(ft['utxoCount']), format_coin(amount, ft['decimal'])))
         # noinspection PyUnresolvedReferences
         self.layoutChanged.emit()
 

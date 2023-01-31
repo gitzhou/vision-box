@@ -92,7 +92,7 @@ class SendFtUi(QDialog, Ui_dialogSendFt):
             if not self.unspents:
                 QMessageBox.information(self, '信息', f'没有 SPACE 可用，无法发送 {self.ft["symbol"]}。', QMessageBox.StandardButton.Ok)
                 return
-            if not all([self.key.address() == unspent.address for unspent in self.unspents]):
+            if len([self.key.address() == unspent.address for unspent in self.unspents]) > 3:
                 Transaction(chain=self.key.chain).add_inputs(self.unspents).add_change(self.key.address()).sign().broadcast()
             # 发送 FT
             self.contract.ft_transfer(self.ft, self.key, self.receivers, self.send_ft_callback)
