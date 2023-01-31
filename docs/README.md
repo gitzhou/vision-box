@@ -2,8 +2,15 @@
 
 - Non-custodial
 - HD (Hierarchical Deterministic) support
+- Multi-platform support
 
 [Download](https://github.com/gitzhou/vision-box/releases/latest)
+
+## v0.3.0
+
+- Support Mainnet
+- Support sending FT
+- Fix known issues, optimization, and code refactoring
 
 ## v0.2.0
 

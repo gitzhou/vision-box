@@ -12,7 +12,18 @@ from designer.startup import Ui_formStartup
 from utils import write_account_file, read_account_file
 
 welcome = """
-https://visionbox.space
+                                                         USE AT YOUR OWN RISK
+
+                                                           https://visionbox.space
+
+
+v0.3.0
+------
+
+- Support Mainnet
+- Support sending FT
+- Fix known issues, optimization, and code refactoring
+
 
 v0.2.0
 ------
@@ -23,6 +34,7 @@ v0.2.0
 - Support for watching-only wallets
 - Support viewing the private key of each address in the wallet keys
 - Fix known issues, optimization, and code refactoring
+
 
 v0.1.0
 ------
@@ -44,7 +56,7 @@ class StartupUi(QWidget, Ui_formStartup):
         self.account_window = None
         self.app_settings = {}
 
-        self.setFixedSize(600, 450)
+        self.setFixedSize(600, 650)
         self.setWindowTitle('Vision Box')
         self.plainTextEditWelcome.setPlainText(welcome)
         self.pushButtonActivate.clicked.connect(lambda: activate(self.update_client_key))
