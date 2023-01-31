@@ -78,7 +78,7 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
 
     def amount_valid(self) -> bool:
         text = self.lineEditAmount.text()
-        return Decimal(text) * 10 ** COIN_DECIMAL if text else False
+        return bool(Decimal(text) * 10 ** COIN_DECIMAL) if text else False
 
     def parse_receivers(self):
         lines = splitlines_without_blank(self.plainTextEditReceivers.toPlainText())
