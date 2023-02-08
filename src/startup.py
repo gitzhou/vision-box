@@ -16,6 +16,8 @@ welcome = """
 
                                                            https://visionbox.space
 
+            1FY3movXuCtFiFMYQMZFBAtmtm2oBX3yzC  # feel free to buy me a coffee :)
+
 
 v0.3.0
 ------
@@ -56,7 +58,7 @@ class StartupUi(QWidget, Ui_formStartup):
         self.account_window = None
         self.app_settings = {}
 
-        self.setFixedSize(600, 650)
+        self.setFixedSize(600, 680)
         self.setWindowTitle('Vision Box')
         self.plainTextEditWelcome.setPlainText(welcome)
         self.pushButtonActivate.clicked.connect(lambda: activate(self.update_client_key))
