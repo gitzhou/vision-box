@@ -123,7 +123,7 @@ class FtModel(QtCore.QAbstractTableModel):
         self.fts: List[Dict] = []
         self._fts: List[str] = []
         self.update_fields(fts)
-        self.headers = ['Symbol', 'Name', 'identifier', 'UTXO', 'Amount']
+        self.headers = ['Symbol', 'Name', 'Identifier', 'UTXO', 'Amount']
 
     def update_fields(self, fts: Optional[List[Dict]] = None):
         self.fts = fts or []

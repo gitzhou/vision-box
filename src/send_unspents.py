@@ -96,15 +96,16 @@ class SendUnspentsUi(QDialog, Ui_dialogSendUnspents):
             r = t.broadcast()
             if r.propagated:
                 QMessageBox.information(self, 'Information', f'Sent successfully.\n\n{r.data}', QMessageBox.StandardButton.Ok)
-                self.accept()
             else:
-                QMessageBox.critical(self, 'Critical', f'Failed to send.\n\n{r.data}\n\n{t.hex()}', QMessageBox.StandardButton.Ok)
+                QMessageBox.critical(self, 'Critical', f'Failed to send.\n\n{r.data}', QMessageBox.StandardButton.Ok)
         except InsufficientFunds as e:
             _groups = re.findall(r'require (\d+) satoshi but only (\d+)', str(e))
             _message = f'Insufficient SPACE.\n\nRequires {format_coin(_groups[0][0])} in total, but only has {format_coin(_groups[0][1])}.'
             QMessageBox.critical(self, 'Critical', _message, QMessageBox.StandardButton.Ok)
         except Exception as e:
             QMessageBox.critical(self, 'Critical', f'Unknown exception.\n\n{e}', QMessageBox.StandardButton.Ok)
+        # force to refresh wallet no matter what the result is
+        self.accept()
 
     def max_amount_clicked(self):
         t = Transaction(chain=self.chain).add_inputs(self.unspents).add_change()
