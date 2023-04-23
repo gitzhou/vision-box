@@ -6,6 +6,10 @@
 
 [Download](https://github.com/gitzhou/vision-box/releases/latest)
 
+## v0.3.1
+
+- Bug fix and dependencies upgrade
+
 ## v0.3.0
 
 - Support Mainnet
