@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QWidget
 from mvclib import Unspent, Key
 from mvclib.constants import Chain
 from mvclib.hd import Xprv, derive_xkeys_from_xkey, Xpub
-from mvclib.service import MetaSV
+from mvclib.service import MvcApi
 from mvclib.utils import decode_address
 
 from base import copy_to_clipboard, set_table_view, UnspentModel, FtModel, copy_table_selected, table_select_all
@@ -44,7 +44,7 @@ class RefreshUnspentThread(QtCore.QThread):
         self.update_fields(client_key)
 
     def update_fields(self, client_key: str):
-        self.provider = MetaSV(chain=self.chain, timeout=TIMEOUT, client_key=client_key)
+        self.provider = MvcApi(chain=self.chain, timeout=TIMEOUT, client_key=client_key)
 
     def run(self):
         try:

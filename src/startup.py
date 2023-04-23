@@ -19,6 +19,12 @@ welcome = """
             1FY3movXuCtFiFMYQMZFBAtmtm2oBX3yzC  # feel free to buy me a coffee :)
 
 
+v0.3.1
+------
+
+- Bug fix and dependencies upgrade
+
+
 v0.3.0
 ------
 
