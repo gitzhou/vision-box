@@ -6,6 +6,10 @@
 
 [Download](https://github.com/gitzhou/vision-box/releases/latest)
 
+## v0.3.2
+
+- Dependencies upgrade
+
 ## v0.3.1
 
 - Bug fix and dependencies upgrade
