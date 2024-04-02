@@ -2,7 +2,7 @@
 
 - Non-custodial
 - HD (Hierarchical Deterministic) support
-- Multi-platform support
+- Multi-platform (Mac, Windows) support
 
 Activation Key `L4AGUggrpKabmFjA3vxEdKj4tat2iSUxfjFnWTU7NF1vJBL1YNhd`
 
