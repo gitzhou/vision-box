@@ -4,6 +4,8 @@
 - HD (Hierarchical Deterministic) support
 - Multi-platform support
 
+Activation Key `L4AGUggrpKabmFjA3vxEdKj4tat2iSUxfjFnWTU7NF1vJBL1YNhd`
+
 [Download](https://github.com/gitzhou/vision-box/releases/latest)
 
 ## v0.3.3
