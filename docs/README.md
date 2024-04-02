@@ -6,6 +6,10 @@
 
 [Download](https://github.com/gitzhou/vision-box/releases/latest)
 
+## v0.3.3
+
+- Dependencies upgrade, pump `meta-contract` to v0.4.3
+
 ## v0.3.2
 
 - Dependencies upgrade
