@@ -16,9 +16,6 @@ from mvclib.constants import Chain
 
 basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
 
-if sys.platform == 'win32':
-    basedir = os.path.join(basedir, '_internal')
-
 
 class UrlSchemeHandler(QWebEngineUrlSchemeHandler):
 
